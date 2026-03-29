@@ -25,9 +25,16 @@ button { cursor: pointer; }
 .sidebar-nav { display: grid; gap: 10px; }
 .sidebar-nav button { text-align: left; border: 1px solid transparent; background: transparent; border-radius: 18px; padding: 14px 16px; color: var(--muted); }
 .sidebar-nav button.active { background: white; border-color: var(--line); color: var(--text); box-shadow: 0 16px 40px rgba(40,57,122,.07); }
-.sidebar-note { padding: 18px; border-radius: 24px; background: linear-gradient(180deg, rgba(62,107,255,.12), rgba(255,255,255,.72)); border: 1px solid rgba(62,107,255,.14); align-self: end; }
+.sidebar-note { padding: 18px; border-radius: 24px; background: linear-gradient(180deg, rgba(62,107,255,.12), rgba(255,255,255,.72)); border: 1px solid rgba(62,107,255,.14); }
 .sidebar-note strong, .metric-card strong, .mini-card strong, .account-balance, .total-strong { display: block; font-size: 1.5rem; margin: 8px 0; }
 .sidebar-note small { color: var(--muted); line-height: 1.5; }
+.user-chip { margin-top: 12px; display: inline-flex; padding: 8px 12px; border-radius: 999px; background: #eef2ff; color: #3e6bff; font-size: .92rem; }
+.subscription-card { padding: 18px; border-radius: 24px; background: rgba(255,255,255,.84); border: 1px solid var(--line); box-shadow: 0 18px 40px rgba(40,57,122,.07); align-self: end; }
+.subscription-card h3 { margin: 8px 0 6px; font-family: 'Fraunces', serif; font-size: 1.6rem; }
+.subscription-card p { color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+.full-btn { width: 100%; justify-content: center; }
+.logout-btn, .switch-auth { margin-top: 10px; border: 0; background: transparent; color: var(--muted); }
+.error-text { display: block; margin-top: 8px; color: #c9483b; }
 .main-area { padding: 28px; }
 .page-topbar { display: flex; justify-content: space-between; gap: 18px; align-items: start; margin-bottom: 24px; }
 .page-topbar h2 { font-size: clamp(2rem, 4vw, 3.6rem); line-height: .95; margin: 8px 0 0; }
@@ -81,5 +88,9 @@ button { cursor: pointer; }
 .field span { display: block; margin-bottom: 8px; color: var(--muted); }
 .field input, .field select { width: 100%; min-height: 52px; border-radius: 16px; border: 1px solid var(--line); background: white; padding: 0 14px; }
 .submit-btn { justify-content: center; background: #121827; color: white; }
+.auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(180deg, #f7f8ff, #eef2ff 100%); }
+.auth-card { width: min(520px, 100%); padding: 28px; border-radius: 32px; border: 1px solid rgba(184,194,235,.8); background: rgba(255,255,255,.86); box-shadow: 0 22px 60px rgba(54,78,164,.08); }
+.auth-card h1 { margin: 10px 0 12px; font-family: 'Fraunces', serif; font-size: clamp(2.4rem, 7vw, 4rem); line-height: .92; }
+.auth-card p { color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
 @media (max-width: 1180px) { .app-shell { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; } .hero-summary, .recommendation-grid, .charts-grid, .account-grid, .installment-grid, .split-shell { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 760px) { .main-area, .sidebar { padding: 18px; } .page-topbar, .table-header { flex-direction: column; align-items: stretch; } .hero-summary, .recommendation-grid, .charts-grid, .account-grid, .installment-grid, .split-shell { grid-template-columns: 1fr; } }

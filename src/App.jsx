@@ -71,6 +71,7 @@ const seed = {
 };
 
 const STORAGE_KEY = 'caja-ar-v1';
+const AUTH_KEY = 'pesito-ar-auth-v1';
 const accountIcons = {
   wallet: Wallet,
   bank: Landmark,
@@ -100,6 +101,10 @@ function parseNum(v) {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState(() => {
+    const saved = localStorage.getItem(AUTH_KEY);
+    return saved ? JSON.parse(saved) : null;
+  });
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : seed;
@@ -110,10 +115,16 @@ export default function App() {
   const [showDebtForm, setShowDebtForm] = useState(false);
   const [showInstForm, setShowInstForm] = useState(false);
   const [yieldStatus, setYieldStatus] = useState('idle');
+  const [subStatus, setSubStatus] = useState('idle');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
+
+  useEffect(() => {
+    if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+    else localStorage.removeItem(AUTH_KEY);
+  }, [auth]);
 
   const arsAccounts = data.accounts.filter((a) => a.currency === 'ARS');
   const arsTotal = arsAccounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -262,14 +273,41 @@ export default function App() {
     setShowInstForm(false);
   }
 
+  async function startSubscription() {
+    try {
+      setSubStatus('loading');
+      const response = await fetch('http://localhost:8787/api/create-subscription-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: auth?.email || '' }),
+      });
+      const data = await response.json();
+      const checkoutUrl = data.checkoutUrl || data.url || data.initPoint || data.link;
+      if (!response.ok || !checkoutUrl) throw new Error(data.error || 'No se pudo generar el link');
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error(error);
+      setSubStatus('error');
+    }
+  }
+
+  function handleAuth(payload) {
+    setAuth({ ...payload, plan: 'free' });
+  }
+
+  if (!auth) {
+    return <AuthScreen onAuth={handleAuth} />;
+  }
+
   return (
     <div className="app-shell">
       <div className="noise" />
       <aside className="sidebar">
         <div>
           <span className="eyebrow">Control financiero</span>
-          <h1>Caja AR</h1>
+          <h1>pesito.ar</h1>
           <p>Una app argentina para ver tu plata real, tus deudas, tus cuotas y dónde te conviene tener los pesos.</p>
+          <div className="user-chip">{auth.name || auth.email}</div>
         </div>
         <nav className="sidebar-nav">
           {[
@@ -286,6 +324,16 @@ export default function App() {
           <strong>ARS hoy</strong>
           <span>{formatMoney(arsTotal)}</span>
           <small>{bestYield ? `Mejor TNA actual: ${bestYield.label} · ${bestYield.tna}%` : 'Sin datos de rendimiento'}</small>
+        </div>
+        <div className="subscription-card">
+          <span className="eyebrow">Suscripción</span>
+          <h3>pesito.ar Pro</h3>
+          <p>$6.000 por mes para usar la app con seguimiento completo.</p>
+          <button className="submit-btn full-btn" onClick={startSubscription}>
+            {subStatus === 'loading' ? 'Generando link…' : 'Suscribirme'}
+          </button>
+          {subStatus === 'error' && <small className="error-text">No pude generar el link de pago. Revisá el backend/API key.</small>}
+          <button className="logout-btn" onClick={() => setAuth(null)}>Cerrar sesión</button>
         </div>
       </aside>
 
@@ -609,4 +657,27 @@ function InstallmentForm({ accounts, onSubmit }) {
     <Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
     <button className="submit-btn">Guardar plan</button>
   </form>;
+}
+
+function AuthScreen({ onAuth }) {
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  return (
+    <div className="auth-shell">
+      <div className="auth-card">
+        <span className="eyebrow">Bienvenido a pesito.ar</span>
+        <h1>Tu plata, clara.</h1>
+        <p>Ingresá para controlar gastos, cuentas, cuotas y elegir dónde conviene tener tus pesos.</p>
+        <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onAuth(form); }}>
+          {mode === 'register' && <Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />}
+          <Field label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+          <Field label="Contraseña" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+          <button className="submit-btn full-btn">{mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
+        </form>
+        <button className="switch-auth" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+          {mode === 'login' ? '¿No tenés cuenta? Crear una' : 'Ya tengo cuenta'}
+        </button>
+      </div>
+    </div>
+  );
 }
