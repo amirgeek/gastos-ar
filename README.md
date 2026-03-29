@@ -10,11 +10,12 @@ Frontend / Vercel:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `GALIO_CLIENT_ID`
 - `GALIO_API_KEY`
 - `APP_BASE_URL`
 - `GALIO_SANDBOX`
-- `GALIO_NOTIFICATION_URL` (opcional)
+- `GALIO_NOTIFICATION_URL` (opcional, idealmente `https://tu-dominio/api/galio-webhook`)
 
 ### Qué falta configurar manualmente
 
