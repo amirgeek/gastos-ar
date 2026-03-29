@@ -348,7 +348,7 @@ export default function App() {
   }
 
   if (!auth) {
-    return <AuthScreen onAuth={handleAuth} />;
+    return <LandingScreen onAuth={handleAuth} />;
   }
 
   return (
@@ -711,11 +711,12 @@ function InstallmentForm({ accounts, onSubmit }) {
   </form>;
 }
 
-function AuthScreen({ onAuth }) {
+function LandingScreen({ onAuth }) {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [openAuth, setOpenAuth] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
@@ -731,23 +732,111 @@ function AuthScreen({ onAuth }) {
   }
 
   return (
-    <div className="auth-shell">
-      <div className="auth-card">
-        <span className="eyebrow">Bienvenido a pesito.ar</span>
-        <h1>Tu plata, clara.</h1>
-        <p>Ingresá para controlar gastos, cuentas, cuotas y elegir dónde conviene tener tus pesos.</p>
-        <form className="form-grid" onSubmit={submit}>
-          {mode === 'register' && <Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />}
-          <Field label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          <Field label="Contraseña" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-          <button className="submit-btn full-btn">{loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
-          {error && <small className="error-text">{error}</small>}
-          {mode === 'register' && supabase && <small className="hint-text">Si activás confirmación por email en Supabase, el alta va a requerir validación.</small>}
-        </form>
-        <button className="switch-auth" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-          {mode === 'login' ? '¿No tenés cuenta? Crear una' : 'Ya tengo cuenta'}
-        </button>
-      </div>
+    <div className="landing-shell">
+      <header className="landing-topbar">
+        <div>
+          <span className="eyebrow">Finanzas personales para Argentina</span>
+          <div className="landing-brand">pesito.ar</div>
+        </div>
+        <div className="landing-actions">
+          <button className="ghost" onClick={() => { setMode('login'); setOpenAuth(true); }}>Ingresar</button>
+          <button className="submit-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Empezar</button>
+        </div>
+      </header>
+
+      <main className="landing-main">
+        <section className="landing-hero">
+          <div className="landing-copy">
+            <span className="eyebrow">Tu plata, clara</span>
+            <h1>Una app pensada para ordenar la plata real de vivir en Argentina.</h1>
+            <p>
+              Controlá cuentas, gastos, ingresos, deudas, cuotas y rendimiento de tus pesos en un solo lugar. Sin planillas infinitas. Sin adivinar dónde se te va la plata.
+            </p>
+            <div className="hero-cta-row">
+              <button className="submit-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Crear cuenta</button>
+              <button className="ghost" onClick={() => { setMode('login'); setOpenAuth(true); }}>Ya tengo cuenta</button>
+            </div>
+            <div className="micro-pills">
+              <span>Mercado Pago · Belo · bancos · efectivo</span>
+              <span>Cuotas, deudas y vencimientos</span>
+              <span>Comparador de rendimientos ARS</span>
+            </div>
+          </div>
+          <div className="landing-preview">
+            <div className="preview-card big">
+              <span className="eyebrow">Dashboard</span>
+              <strong>$485.000</strong>
+              <p>Saldo total distribuido entre Mercado Pago, Belo y banco.</p>
+            </div>
+            <div className="preview-grid">
+              <div className="preview-card"><span className="eyebrow">Deudas</span><strong>$50.000</strong></div>
+              <div className="preview-card"><span className="eyebrow">Cuotas</span><strong>$135.000</strong></div>
+              <div className="preview-card wide"><span className="eyebrow">Mejor rendimiento hoy</span><strong>Belo · 31.2% TNA</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section two-col">
+          <div>
+            <span className="eyebrow">Qué resuelve</span>
+            <h2>Deja de manejar tu economía con memoria, capturas y notas sueltas.</h2>
+          </div>
+          <div className="bullet-stack">
+            <div><strong>Cuentas separadas</strong><p>Sabé exactamente cuánto tenés en Mercado Pago, Belo, banco, efectivo y USD.</p></div>
+            <div><strong>Cuotas de verdad</strong><p>Entendé cuánto te compromete cada compra hoy y en los próximos meses.</p></div>
+            <div><strong>Deudas claras</strong><p>Registrá quién te debe, a quién le debés y qué se vence primero.</p></div>
+          </div>
+        </section>
+
+        <section className="landing-section cards-3">
+          <article className="landing-card">
+            <span className="eyebrow">Control</span>
+            <h3>Dashboard mensual</h3>
+            <p>Ingresos, egresos, saldo disponible, compromisos por cuotas y resumen por categoría.</p>
+          </article>
+          <article className="landing-card">
+            <span className="eyebrow">Decisión</span>
+            <h3>Rendimiento en ARS</h3>
+            <p>Compará billeteras y elegí dónde te conviene tener la plata según la tasa del momento.</p>
+          </article>
+          <article className="landing-card">
+            <span className="eyebrow">Seguimiento</span>
+            <h3>Todo en un solo lugar</h3>
+            <p>Movimientos, deudas, cuotas, presupuestos y cuentas sin depender de Excel ni cuadernos.</p>
+          </article>
+        </section>
+
+        <section className="pricing-strip">
+          <div>
+            <span className="eyebrow">Precio fundador</span>
+            <h2>$6.000 por mes</h2>
+            <p>Acceso completo a pesito.ar para ordenar tus finanzas, entender tus compromisos y tomar mejores decisiones con tu plata.</p>
+          </div>
+          <button className="submit-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Empezar ahora</button>
+        </section>
+      </main>
+
+      {openAuth && (
+        <div className="modal-backdrop" onClick={() => setOpenAuth(false)}>
+          <div className="modal-shell auth-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-top">
+              <h3>{mode === 'login' ? 'Ingresar a pesito.ar' : 'Crear tu cuenta'}</h3>
+              <button onClick={() => setOpenAuth(false)}>✕</button>
+            </div>
+            <form className="form-grid" onSubmit={submit}>
+              {mode === 'register' && <Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />}
+              <Field label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <Field label="Contraseña" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+              <button className="submit-btn full-btn">{loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
+              {error && <small className="error-text">{error}</small>}
+              {mode === 'register' && supabase && <small className="hint-text">Si activás confirmación por email en Supabase, el alta va a requerir validación.</small>}
+            </form>
+            <button className="switch-auth" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+              {mode === 'login' ? '¿No tenés cuenta? Crear una' : 'Ya tengo cuenta'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
