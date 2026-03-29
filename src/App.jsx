@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { supabase } from './lib/supabase';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -125,6 +126,38 @@ export default function App() {
     if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
     else localStorage.removeItem(AUTH_KEY);
   }, [auth]);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data.session?.user;
+      if (user) {
+        setAuth({
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || user.email,
+          plan: 'free',
+        });
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user;
+      if (user) {
+        setAuth({
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || user.email,
+          plan: 'free',
+        });
+      } else {
+        setAuth(null);
+      }
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const arsAccounts = data.accounts.filter((a) => a.currency === 'ARS');
   const arsTotal = arsAccounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -276,10 +309,10 @@ export default function App() {
   async function startSubscription() {
     try {
       setSubStatus('loading');
-      const response = await fetch('http://localhost:8787/api/create-subscription-link', {
+      const response = await fetch('/api/create-subscription-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: auth?.email || '' }),
+        body: JSON.stringify({ email: auth?.email || '', userId: auth?.id || null }),
       });
       const data = await response.json();
       const checkoutUrl = data.checkoutUrl || data.url || data.initPoint || data.link;
@@ -291,7 +324,26 @@ export default function App() {
     }
   }
 
-  function handleAuth(payload) {
+  async function handleAuth(payload, mode) {
+    if (supabase) {
+      if (mode === 'register') {
+        const { error } = await supabase.auth.signUp({
+          email: payload.email,
+          password: payload.password,
+          options: { data: { name: payload.name } },
+        });
+        if (error) throw error;
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: payload.email,
+        password: payload.password,
+      });
+      if (error) throw error;
+      return;
+    }
+
     setAuth({ ...payload, plan: 'free' });
   }
 
@@ -333,7 +385,7 @@ export default function App() {
             {subStatus === 'loading' ? 'Generando link…' : 'Suscribirme'}
           </button>
           {subStatus === 'error' && <small className="error-text">No pude generar el link de pago. Revisá el backend/API key.</small>}
-          <button className="logout-btn" onClick={() => setAuth(null)}>Cerrar sesión</button>
+          <button className="logout-btn" onClick={async () => { if (supabase) await supabase.auth.signOut(); setAuth(null); }}>Cerrar sesión</button>
         </div>
       </aside>
 
@@ -662,17 +714,35 @@ function InstallmentForm({ accounts, onSubmit }) {
 function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function submit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await onAuth(form, mode);
+    } catch (err) {
+      setError(err.message || 'No se pudo continuar');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="auth-shell">
       <div className="auth-card">
         <span className="eyebrow">Bienvenido a pesito.ar</span>
         <h1>Tu plata, clara.</h1>
         <p>Ingresá para controlar gastos, cuentas, cuotas y elegir dónde conviene tener tus pesos.</p>
-        <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onAuth(form); }}>
+        <form className="form-grid" onSubmit={submit}>
           {mode === 'register' && <Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />}
           <Field label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
           <Field label="Contraseña" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-          <button className="submit-btn full-btn">{mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
+          <button className="submit-btn full-btn">{loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
+          {error && <small className="error-text">{error}</small>}
+          {mode === 'register' && supabase && <small className="hint-text">Si activás confirmación por email en Supabase, el alta va a requerir validación.</small>}
         </form>
         <button className="switch-auth" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
           {mode === 'login' ? '¿No tenés cuenta? Crear una' : 'Ya tengo cuenta'}
