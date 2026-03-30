@@ -740,10 +740,10 @@ function LandingScreen({ onAuth }) {
   }
 
   const statCopy = {
-    saldo: 'Tu foto consolidada entre billeteras, banco, efectivo y USD.',
-    tasa: 'Detecta rápido dónde hoy tus pesos están rindiendo mejor.',
-    cuotas: 'Te muestra qué parte del mes ya la tenés comprometida.',
-    lectura: 'Una lectura simple para entender si el mes viene sano o pesado.',
+    saldo: 'Entre todas tus billeteras y cuentas.',
+    tasa: 'Mejor opción para mover pesos ahora.',
+    cuotas: 'Cuotas activas + gastos fijos del mes.',
+    lectura: 'Entró el sueldo, se fue el alquiler. Las suscripciones ya están pesando.',
   };
 
   return (
@@ -756,12 +756,13 @@ function LandingScreen({ onAuth }) {
         </div>
         <nav className="landing-nav desktop-nav">
           <a href="#como-funciona">Cómo funciona</a>
-          <a href="#confianza">Confianza</a>
+          <a href="#billeteras">Billeteras</a>
+          <a href="#confianza">Rendimientos</a>
           <a href="#precio">Precio</a>
         </nav>
         <div className="landing-actions desktop-actions">
           <button className="ghost" onClick={() => openAuthFlow('login')}>Ingresar</button>
-          <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Probar ahora</button>
+          <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Empezar gratis</button>
         </div>
         <button className="mobile-menu-btn" onClick={() => setMobileMenu((v) => !v)}>{mobileMenu ? 'Cerrar' : 'Menú'}</button>
       </header>
@@ -769,10 +770,11 @@ function LandingScreen({ onAuth }) {
       {mobileMenu && (
         <div className="mobile-nav-drawer">
           <a href="#como-funciona" onClick={() => setMobileMenu(false)}>Cómo funciona</a>
-          <a href="#confianza" onClick={() => setMobileMenu(false)}>Confianza</a>
+          <a href="#billeteras" onClick={() => setMobileMenu(false)}>Billeteras</a>
+          <a href="#confianza" onClick={() => setMobileMenu(false)}>Rendimientos</a>
           <a href="#precio" onClick={() => setMobileMenu(false)}>Precio</a>
           <button className="ghost" onClick={() => openAuthFlow('login')}>Ingresar</button>
-          <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Empezar</button>
+          <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Empezar gratis</button>
         </div>
       )}
 
@@ -789,38 +791,38 @@ function LandingScreen({ onAuth }) {
 
         <section className="landing-hero argentina-grid">
           <div className="landing-copy hero-copy-block">
-            <span className="eyebrow">Radar financiero local</span>
-            <h1>No es una app genérica de budget. Es un tablero para sobrevivir y ordenar la plata en Argentina.</h1>
+            <span className="eyebrow">Tu gestor financiero argento</span>
+            <h1>Toda tu plata en un lugar. Mercado Pago, Belo, banco, efectivo y cuotas.</h1>
             <p>
-              Pesito.ar junta lo que normalmente tenés repartido entre billeteras, bancos, cuotas, deuda, efectivo y memoria. Te muestra qué tenés, qué debés, qué se vence y dónde te conviene dejar los pesos hoy.
+              Pesito.ar te muestra cuánto tenés, cuánto debés, qué se vence y dónde conviene tener la plata hoy. Sin planillas, sin vueltas.
             </p>
             <div className="hero-cta-row hero-cta-priority">
-              <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Crear cuenta</button>
+              <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Crear cuenta gratis</button>
               <button className="ghost" onClick={() => openAuthFlow('login')}>Ya tengo acceso</button>
             </div>
             <div className="micro-pills tape-pills">
-              <span>Mercado Pago · Belo · bancos · efectivo</span>
-              <span>Seguimiento de cuotas sin humo</span>
-              <span>Comparador de rendimiento en ARS</span>
+              <span>Mercado Pago · Belo · Uala · bancos · efectivo</span>
+              <span>Cuotas y deudas con seguimiento real</span>
+              <span>Te dice dónde rinde más tu plata hoy</span>
             </div>
           </div>
 
           <div className="landing-preview command-center">
             <div className="console-card hero-console interactive-console">
               <div className="console-top">
-                <span className="eyebrow">Centro de control</span>
+                <span className="eyebrow">Tu resumen de hoy</span>
                 <span className="console-dot" />
               </div>
               <button className={`stat-hotspot ${hoveredStat === 'saldo' ? 'active' : ''}`} onMouseEnter={() => setHoveredStat('saldo')} onFocus={() => setHoveredStat('saldo')}>
                 <div className="big-peso">$485.000</div>
-                <p>Saldo total visible entre cuentas, efectivo y billeteras.</p>
+                <p>Entre todas tus billeteras y cuentas.</p>
               </button>
               <div className="signal-row signal-row-rich">
                 <button className={`console-metric ${hoveredStat === 'tasa' ? 'active' : ''}`} onMouseEnter={() => setHoveredStat('tasa')} onFocus={() => setHoveredStat('tasa')}>
-                  <span>TNA más alta</span><strong>Belo 31.2%</strong><small>para mover ARS rápido</small>
+                  <span>TNA más alta</span><strong>Belo 31.2%</strong><small>Mejor opción para mover pesos ahora</small>
                 </button>
                 <button className={`console-metric ${hoveredStat === 'cuotas' ? 'active' : ''}`} onMouseEnter={() => setHoveredStat('cuotas')} onFocus={() => setHoveredStat('cuotas')}>
-                  <span>Compromiso mensual</span><strong>$135.000</strong><small>cuotas activas + gastos fijos</small>
+                  <span>Compromiso mensual</span><strong>$135.000</strong><small>Cuotas activas + gastos fijos del mes</small>
                 </button>
               </div>
               <div className="stat-tooltip">{statCopy[hoveredStat]}</div>
@@ -829,16 +831,16 @@ function LandingScreen({ onAuth }) {
               <div className="console-card narrow enriched-card">
                 <span className="eyebrow">Deuda neta</span>
                 <strong>$50.000</strong>
-                <small>Entre lo que debés y lo que te deben hoy.</small>
+                <small>Lo que debés menos lo que te deben</small>
               </div>
               <div className="console-card narrow enriched-card">
                 <span className="eyebrow">Cuotas vivas</span>
                 <strong>4 meses</strong>
-                <small>Con próximos pagos ya previstos en el flujo.</small>
+                <small>Con vencimientos ya marcados en tu flujo</small>
               </div>
               <div className="console-card wide trend-card" onMouseEnter={() => setHoveredStat('lectura')} onFocus={() => setHoveredStat('lectura')}>
                 <span className="eyebrow">Lectura del mes</span>
-                <strong>Entró sueldo. Se fue alquiler. Las suscripciones ya están pesando.</strong>
+                <strong>Entró el sueldo, se fue el alquiler. Las suscripciones ya están pesando.</strong>
               </div>
             </div>
           </div>
@@ -846,43 +848,43 @@ function LandingScreen({ onAuth }) {
 
         <section className="landing-section manifesto-band" id="como-funciona">
           <div className="manifesto-left">
-            <span className="eyebrow">Hecha para un contexto real</span>
-            <h2>La economía local no entra en un template de Silicon Valley.</h2>
+            <span className="eyebrow">Hecha para la economía real</span>
+            <h2>No somos una app de Silicon Valley. Somos una app para el que vive con pesos, cuotas y tres billeteras.</h2>
           </div>
           <div className="manifesto-right bullet-stack editorial-stack">
-            <div><strong>Cuentas separadas de verdad</strong><p>Mercado Pago no es lo mismo que banco, efectivo o USD. Acá cada bolsillo se entiende por separado.</p></div>
-            <div><strong>Cuotas como primera clase</strong><p>No son un detalle: son una capa completa del flujo mensual y del futuro que ya comprometiste.</p></div>
-            <div><strong>Mejor decisión, no solo registro</strong><p>No alcanza con anotar. También necesitás saber dónde rinde más y qué movimiento te conviene hacer.</p></div>
+            <div><strong>Cada bolsillo es un bolsillo</strong><p>Mercado Pago no es lo mismo que tu banco ni que el efectivo del cajero. Acá registrás cada cuenta por separado y ves el total sin mezclar nada.</p></div>
+            <div><strong>Las cuotas son ciudadanas de primera</strong><p>Registrás una compra en cuotas y pesito.ar la distribuye mes a mes en tu flujo. Sabés cuánto comprometiste antes de comprometer más.</p></div>
+            <div><strong>Te dice dónde poner la plata</strong><p>No alcanza con saber cuánto tenés. Pesito.ar compara las tasas actuales de tus billeteras y te dice si estás dejando rendimiento sobre la mesa.</p></div>
           </div>
         </section>
 
         <section className="landing-section social-proof" id="confianza">
           <div className="proof-intro">
-            <span className="eyebrow">Confianza</span>
-            <h2>Claridad para gente que vive entre billeteras, banco, efectivo y cuotas.</h2>
+            <span className="eyebrow">Por qué funciona acá</span>
+            <h2>Pensada para el que usa MP, Belo, banco y efectivo al mismo tiempo.</h2>
           </div>
           <div className="proof-grid">
-            <div className="proof-stat"><strong>MP + Belo + banco</strong><small>pensado para el mix real que usa casi cualquiera acá</small></div>
-            <div className="proof-stat"><strong>foto mensual completa</strong><small>ingresos, gastos, cuotas y deuda en un mismo tablero</small></div>
-            <div className="proof-quote">“Por fin puedo ver en un solo lugar lo que tengo, lo que debo y lo que ya comprometí.”</div>
+            <div className="proof-stat"><strong>MP + Belo + Uala + banco</strong><small>El mix real de casi cualquier argentino, todo junto en uno</small></div>
+            <div className="proof-stat"><strong>Foto mensual completa</strong><small>Ingresos, gastos, cuotas y deuda en un mismo tablero, sin pestañas perdidas</small></div>
+            <div className="proof-quote">"Por fin puedo ver en un solo lugar lo que tengo, lo que debo y lo que ya comprometí este mes."</div>
           </div>
         </section>
 
-        <section className="landing-section asym-grid features-rail">
+        <section className="landing-section asym-grid features-rail" id="billeteras">
           <article className="landing-card feature-block equal-card">
-            <span className="eyebrow">01 · lectura</span>
+            <span className="eyebrow">01 · LECTURA</span>
             <h3>Dashboard con criterio argentino</h3>
-            <p>Ingresos, egresos, saldo en ARS y USD, presión de cuotas, deudas y panorama mensual sin esconder lo importante.</p>
+            <p>Ingresos, egresos, saldo en ARS y USD, presión de cuotas y deudas. Todo visible de entrada, sin esconder lo importante.</p>
           </article>
           <article className="landing-card feature-block equal-card">
-            <span className="eyebrow">02 · movimiento</span>
-            <h3>Billeteras, bancos y efectivo</h3>
-            <p>Visualizá dónde está la plata ahora mismo y cómo se reparte entre cada bolsillo real.</p>
+            <span className="eyebrow">02 · MOVIMIENTO</span>
+            <h3>Todas tus billeteras, un solo lugar</h3>
+            <p>Cargás lo que entra en Mercado Pago, lo que tenés en Belo, lo que guardaste en efectivo. Pesito.ar consolida todo y te muestra la foto real.</p>
           </article>
           <article className="landing-card feature-block equal-card">
-            <span className="eyebrow">03 · rendimiento</span>
-            <h3>Tasas para decidir rápido</h3>
-            <p>Compará opciones en ARS y detectá si estás dejando rendimiento sobre la mesa sin darte cuenta.</p>
+            <span className="eyebrow">03 · RENDIMIENTO</span>
+            <h3>¿Dónde conviene tener la plata hoy?</h3>
+            <p>Pesito.ar compara tasas en tiempo real y te avisa si tu plata puede rendir más en otra billetera. Decidís con datos, no con intuición.</p>
           </article>
         </section>
 
@@ -890,22 +892,24 @@ function LandingScreen({ onAuth }) {
           <div>
             <span className="eyebrow">Precio fundador</span>
             <h2>$6.000 por mes</h2>
-            <p>Para gente que necesita claridad, no una app linda vacía. Pesito.ar te ordena la foto completa de tu plata y te ayuda a decidir mejor.</p>
+            <p>Para el que quiere claridad de verdad, no una app linda que no sirve para Argentina.</p>
             <ul className="pricing-list">
-              <li>Cuentas, billeteras, banco, efectivo y USD</li>
+              <li>Registro ilimitado de billeteras, banco y efectivo</li>
               <li>Seguimiento de cuotas y deudas</li>
-              <li>Lectura mensual + rendimiento en ARS</li>
+              <li>Comparador de rendimientos en ARS actualizado</li>
+              <li>Lectura mensual automática de tu situación</li>
+              <li>Acceso web + app en un solo flujo</li>
             </ul>
           </div>
           <div className="pricing-actions pricing-actions-stack">
             <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Empezar ahora</button>
-            <small>Login + app + suscripción en un solo flujo.</small>
+            <small>Login, suscripción y app en un solo paso. Sin letra chica.</small>
           </div>
         </section>
       </main>
 
       <div className="mobile-sticky-cta">
-        <button className="submit-btn accent-btn full-btn" onClick={() => openAuthFlow('register')}>Empezar ahora</button>
+        <button className="submit-btn accent-btn full-btn" onClick={() => openAuthFlow('register')}>Empezar gratis</button>
       </div>
 
       {openAuth && (
