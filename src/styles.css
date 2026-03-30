@@ -95,6 +95,9 @@ button { cursor: pointer; }
 .argentina-tech .landing-topbar, .argentina-tech .landing-hero, .argentina-tech .landing-section, .argentina-tech .pricing-strip, .ticker-strip { width: min(1260px, 100%); margin: 0 auto; position: relative; }
 .landing-topbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding-bottom: 18px; }
 .landing-brand { font-family: 'Fraunces', serif; font-size: 2.7rem; line-height: .9; margin-top: 8px; }
+.brand-subline, .hero-note { display: block; color: oklch(0.45 0.03 244); line-height: 1.6; }
+.brand-subline { margin-top: 6px; }
+.hero-note { margin-top: 10px; max-width: 52ch; }
 .landing-nav { display: flex; justify-content: center; gap: 18px; }
 .landing-nav a { color: oklch(0.36 0.03 245); text-decoration: none; }
 .landing-actions, .hero-cta-row, .pricing-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

@@ -753,6 +753,7 @@ function LandingScreen({ onAuth }) {
         <div>
           <span className="eyebrow">Finanzas personales para Argentina</span>
           <div className="landing-brand">pesito.ar</div>
+          <small className="brand-subline">Hecha por argentinos, para argentinos</small>
         </div>
         <nav className="landing-nav desktop-nav">
           <a href="#como-funciona">Cómo funciona</a>
@@ -791,17 +792,18 @@ function LandingScreen({ onAuth }) {
 
         <section className="landing-hero argentina-grid">
           <div className="landing-copy hero-copy-block">
-            <span className="eyebrow">Tu gestor financiero argento</span>
-            <h1>Toda tu plata en un lugar. Mercado Pago, Belo, banco, efectivo y cuotas.</h1>
+            <span className="eyebrow">Hecha acá, para la economía de acá</span>
+            <h1>Toda tu plata en un lugar. Tus cuentas, tus billeteras, efectivo y cuotas.</h1>
             <p>
               Pesito.ar te muestra cuánto tenés, cuánto debés, qué se vence y dónde conviene tener la plata hoy. Sin planillas, sin vueltas.
             </p>
+            <small className="hero-note">Una app hecha por argentinos que también viven con billeteras, cuotas y pesos.</small>
             <div className="hero-cta-row hero-cta-priority">
               <button className="submit-btn accent-btn" onClick={() => openAuthFlow('register')}>Crear cuenta gratis</button>
               <button className="ghost" onClick={() => openAuthFlow('login')}>Ya tengo acceso</button>
             </div>
             <div className="micro-pills tape-pills">
-              <span>Mercado Pago · Belo · Uala · bancos · efectivo</span>
+              <span>Tus billeteras, tu banco, efectivo y más</span>
               <span>Cuotas y deudas con seguimiento real</span>
               <span>Te dice dónde rinde más tu plata hoy</span>
             </div>
@@ -852,7 +854,7 @@ function LandingScreen({ onAuth }) {
             <h2>No somos una app de Silicon Valley. Somos una app para el que vive con pesos, cuotas y tres billeteras.</h2>
           </div>
           <div className="manifesto-right bullet-stack editorial-stack">
-            <div><strong>Cada bolsillo es un bolsillo</strong><p>Mercado Pago no es lo mismo que tu banco ni que el efectivo del cajero. Acá registrás cada cuenta por separado y ves el total sin mezclar nada.</p></div>
+            <div><strong>Cada bolsillo es un bolsillo</strong><p>Tu billetera digital no es lo mismo que tu banco ni que el efectivo del cajero. Acá registrás cada cuenta por separado y ves el total sin mezclar nada.</p></div>
             <div><strong>Las cuotas son ciudadanas de primera</strong><p>Registrás una compra en cuotas y pesito.ar la distribuye mes a mes en tu flujo. Sabés cuánto comprometiste antes de comprometer más.</p></div>
             <div><strong>Te dice dónde poner la plata</strong><p>No alcanza con saber cuánto tenés. Pesito.ar compara las tasas actuales de tus billeteras y te dice si estás dejando rendimiento sobre la mesa.</p></div>
           </div>
@@ -861,10 +863,10 @@ function LandingScreen({ onAuth }) {
         <section className="landing-section social-proof" id="confianza">
           <div className="proof-intro">
             <span className="eyebrow">Por qué funciona acá</span>
-            <h2>Pensada para el que usa MP, Belo, banco y efectivo al mismo tiempo.</h2>
+            <h2>Pensada para el que usa varias cuentas, billeteras y efectivo al mismo tiempo.</h2>
           </div>
           <div className="proof-grid">
-            <div className="proof-stat"><strong>MP + Belo + Uala + banco</strong><small>El mix real de casi cualquier argentino, todo junto en uno</small></div>
+            <div className="proof-stat"><strong>Tus cuentas, como vos las uses</strong><small>Registrá cada billetera por separado y mantené el control total</small></div>
             <div className="proof-stat"><strong>Foto mensual completa</strong><small>Ingresos, gastos, cuotas y deuda en un mismo tablero, sin pestañas perdidas</small></div>
             <div className="proof-quote">"Por fin puedo ver en un solo lugar lo que tengo, lo que debo y lo que ya comprometí este mes."</div>
           </div>
@@ -879,7 +881,7 @@ function LandingScreen({ onAuth }) {
           <article className="landing-card feature-block equal-card">
             <span className="eyebrow">02 · MOVIMIENTO</span>
             <h3>Todas tus billeteras, un solo lugar</h3>
-            <p>Cargás lo que entra en Mercado Pago, lo que tenés en Belo, lo que guardaste en efectivo. Pesito.ar consolida todo y te muestra la foto real.</p>
+            <p>Creás tus propias billeteras y cuentas dentro de la app. Cada peso sabe de dónde viene y dónde está.</p>
           </article>
           <article className="landing-card feature-block equal-card">
             <span className="eyebrow">03 · RENDIMIENTO</span>
@@ -894,7 +896,7 @@ function LandingScreen({ onAuth }) {
             <h2>$6.000 por mes</h2>
             <p>Para el que quiere claridad de verdad, no una app linda que no sirve para Argentina.</p>
             <ul className="pricing-list">
-              <li>Registro ilimitado de billeteras, banco y efectivo</li>
+              <li>Registrá todas tus cuentas y billeteras: cada una tiene su propio espacio</li>
               <li>Seguimiento de cuotas y deudas</li>
               <li>Comparador de rendimientos en ARS actualizado</li>
               <li>Lectura mensual automática de tu situación</li>
