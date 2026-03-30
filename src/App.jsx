@@ -1024,7 +1024,7 @@ function LandingScreen({ onAuth }) {
           <div className="manifesto-right bullet-stack editorial-stack">
             <div><strong>Cada bolsillo es un bolsillo</strong><p>Tu billetera digital no es lo mismo que tu banco ni que el efectivo del cajero. Acá registrás cada cuenta por separado y ves el total sin mezclar nada.</p></div>
             <div><strong>Las cuotas son ciudadanas de primera</strong><p>Registrás una compra en cuotas y pesito.ar la distribuye mes a mes en tu flujo. Sabés cuánto comprometiste antes de comprometer más.</p></div>
-            <div><strong>Te dice dónde poner la plata</strong><p>No alcanza con saber cuánto tenés. Pesito.ar compara las tasas actuales de tus billeteras y te dice si estás dejando rendimiento sobre la mesa.</p></div>
+            <div><strong>Tarjetas con cierre y vencimiento</strong><p>También podés registrar compras con tarjeta, ver próximo resumen, disponible estimado y cuánto ya comprometiste antes del próximo cierre.</p></div>
           </div>
         </section>
 
@@ -1052,9 +1052,9 @@ function LandingScreen({ onAuth }) {
             <p>Creás tus propias billeteras y cuentas dentro de la app. Cada peso sabe de dónde viene y dónde está.</p>
           </article>
           <article className="landing-card feature-block equal-card">
-            <span className="eyebrow">03 · RENDIMIENTO</span>
-            <h3>¿Dónde conviene tener la plata hoy?</h3>
-            <p>Pesito.ar compara tasas en tiempo real y te avisa si tu plata puede rendir más en otra billetera. Decidís con datos, no con intuición.</p>
+            <span className="eyebrow">03 · TARJETAS</span>
+            <h3>Compras con tarjeta bajo control</h3>
+            <p>Registrás tarjeta, cierre, vencimiento, compras y cuotas. Pesito.ar te muestra próximo resumen y cuánto margen real te queda.</p>
           </article>
         </section>
 
@@ -1067,6 +1067,7 @@ function LandingScreen({ onAuth }) {
               <li>Registrá todas tus cuentas y billeteras: cada una tiene su propio espacio</li>
               <li>Seguimiento de cuotas y deudas</li>
               <li>Comparador de rendimientos en ARS actualizado</li>
+              <li>Tarjetas, compras, cierre y vencimiento bajo control</li>
               <li>Lectura mensual automática de tu situación</li>
               <li>Acceso web + app en un solo flujo</li>
             </ul>
