@@ -99,7 +99,7 @@ export function mapInstallmentToDb(inst, userId) { return { id: inst.id, user_id
 export function mapCreditCardToDb(card, userId) { return { id: card.id, user_id: userId, name: card.name, bank: card.bank, closing_day: card.closingDay, due_day: card.dueDay, limit_amount: card.limit, available_amount: card.available, currency: card.currency }; }
 export function mapCardPurchaseToDb(purchase, userId) { return { id: purchase.id, user_id: userId, card_id: purchase.cardId, title: purchase.title, total: purchase.total, installments: purchase.installments, current_installment: purchase.currentInstallment, installment_amount: purchase.installmentAmount, purchase_date: purchase.purchaseDate, next_due_month: purchase.nextDueMonth, category: purchase.category }; }
 export function mapBudgetToDb(item, userId) { return { id: item.id, user_id: userId, category: item.category, amount: item.amount }; }
-export function mapYieldToDb(item, userId) { return { id: item.id, user_id: userId, provider: item.provider, label: item.label, tna: item.tna, updated_at: new Date().toISOString() }; }
+export function mapYieldToDb(item, userId) { return { user_id: userId, provider: item.provider, label: item.label, tna: item.tna, updated_at: new Date().toISOString() }; }
 export function fromDbBundle(bundle) {
   const rates = (bundle.yields || []).map((row) => ({ id: row.id, provider: row.provider, label: row.label, tna: Number(row.tna || 0) }));
   return {
