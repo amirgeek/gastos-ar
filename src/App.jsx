@@ -110,14 +110,38 @@ function parseNum(v) {
   return Number(String(v).replace(',', '.')) || 0;
 }
 
+function mergeSeed(saved) {
+  if (!saved || typeof saved !== 'object') return seed;
+  return {
+    ...seed,
+    ...saved,
+    accounts: Array.isArray(saved.accounts) ? saved.accounts : seed.accounts,
+    transactions: Array.isArray(saved.transactions) ? saved.transactions : seed.transactions,
+    debts: Array.isArray(saved.debts) ? saved.debts : seed.debts,
+    installments: Array.isArray(saved.installments) ? saved.installments : seed.installments,
+    creditCards: Array.isArray(saved.creditCards) ? saved.creditCards : seed.creditCards,
+    cardPurchases: Array.isArray(saved.cardPurchases) ? saved.cardPurchases : seed.cardPurchases,
+    budgets: Array.isArray(saved.budgets) ? saved.budgets : seed.budgets,
+    yields: saved.yields && typeof saved.yields === 'object' ? { ...seed.yields, ...saved.yields } : seed.yields,
+  };
+}
+
 export default function App() {
   const [auth, setAuth] = useState(() => {
-    const saved = localStorage.getItem(AUTH_KEY);
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem(AUTH_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [data, setData] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : seed;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? mergeSeed(JSON.parse(saved)) : seed;
+    } catch {
+      return seed;
+    }
   });
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAccountForm, setShowAccountForm] = useState(false);
