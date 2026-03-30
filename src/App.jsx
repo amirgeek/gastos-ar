@@ -837,7 +837,12 @@ function CreditCardForm({ onSubmit }) {
 }
 
 function CardPurchaseForm({ cards, onSubmit }) {
-  const [form, setForm] = useState({ cardId: cards[0]?.id || '', title: '', total: '', installments: 1, currentInstallment: 1, purchaseDate: today(), nextDueMonth: future(10), category: 'Consumo' });
+  const [form, setForm] = useState({ cardId: cards?.[0]?.id || '', title: '', total: '', installments: 1, currentInstallment: 1, purchaseDate: today(), nextDueMonth: future(10), category: 'Consumo' });
+
+  if (!cards?.length) {
+    return <div className="mini-card"><span>Primero cargá una tarjeta para registrar compras.</span></div>;
+  }
+
   return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
     <SelectField label="Tarjeta" value={form.cardId} onChange={(e) => setForm({ ...form, cardId: e.target.value })} options={cards.map((c) => ({ value: c.id, label: c.name }))} />
     <Field label="Compra" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
