@@ -4,6 +4,11 @@ App argentina para controlar gastos, cuentas, deudas, cuotas, tarjetas y rendimi
 
 ## Qué cambió en esta versión
 
+- Módulo de rendimientos rehecho tomando como referencia la estructura de `rendimientos-ar`:
+  - catálogo curado/normalizado de billeteras, cuentas remuneradas, FCIs money market y plazo fijo
+  - seed más realista para cuentas e instrumentos en ARS
+  - sugerencia de mover plata conectada al flujo mensual libre estimado
+  - formularios de cuenta con opción de elegir una entidad conocida o usar `Otra / personalizada`
 - Persistencia base en Supabase para:
   - cuentas
   - movimientos
@@ -48,6 +53,9 @@ Frontend / Vercel:
 
 ## Notas pragmáticas
 
+- **Real/referencial:** la lista curada de billeteras/cuentas remuneradas/FCIs se armó reutilizando la taxonomía y nombres de `rendimientos-ar-tmp` (`public/config.json` + CAFCI proxy). En la UI se marca qué tasas vienen de referencia y cuáles siguen siendo mock curado.
+- **Mock curado:** algunos providers no estaban completos en la referencia original o no tenían una salida simple para pesito.ar. En esos casos quedó una tasa plausible y etiquetada como mock curado para no venderlo como dato vivo.
+- **Plazo fijo:** quedó modelado como instrumento/inversión con estructura útil para el producto, pero sus tasas siguen mock curado inspirado en la estructura de BCRA/rendimientos-ar; no está conectado todavía a fetch en vivo.
 - Si no configurás `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`, la app sigue funcionando en modo local.
 - Con Supabase activo, cada usuario ve su propia data.
 - La primera carga de un usuario nuevo inserta el seed inicial en sus tablas para dejar la app usable.
