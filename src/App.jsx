@@ -732,7 +732,8 @@ function LandingScreen({ onAuth }) {
   }
 
   return (
-    <div className="landing-shell">
+    <div className="landing-shell argentina-tech">
+      <div className="landing-noise" />
       <header className="landing-topbar">
         <div>
           <span className="eyebrow">Finanzas personales para Argentina</span>
@@ -740,79 +741,103 @@ function LandingScreen({ onAuth }) {
         </div>
         <div className="landing-actions">
           <button className="ghost" onClick={() => { setMode('login'); setOpenAuth(true); }}>Ingresar</button>
-          <button className="submit-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Empezar</button>
+          <button className="submit-btn accent-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Probar ahora</button>
         </div>
       </header>
 
       <main className="landing-main">
-        <section className="landing-hero">
-          <div className="landing-copy">
-            <span className="eyebrow">Tu plata, clara</span>
-            <h1>Una app pensada para ordenar la plata real de vivir en Argentina.</h1>
+        <section className="ticker-strip">
+          <span>ARS</span>
+          <span>cuotas</span>
+          <span>deudas</span>
+          <span>billeteras</span>
+          <span>flujo mensual</span>
+          <span>rendimiento</span>
+          <span>caja real</span>
+        </section>
+
+        <section className="landing-hero argentina-grid">
+          <div className="landing-copy hero-copy-block">
+            <span className="eyebrow">Radar financiero local</span>
+            <h1>No es una app genérica de budget. Es un tablero para sobrevivir y ordenar la plata en Argentina.</h1>
             <p>
-              Controlá cuentas, gastos, ingresos, deudas, cuotas y rendimiento de tus pesos en un solo lugar. Sin planillas infinitas. Sin adivinar dónde se te va la plata.
+              Pesito.ar junta lo que normalmente tenés repartido entre billeteras, bancos, cuotas, deuda, efectivo y memoria. Te muestra qué tenés, qué debés, qué se vence y dónde te conviene dejar los pesos hoy.
             </p>
             <div className="hero-cta-row">
-              <button className="submit-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Crear cuenta</button>
-              <button className="ghost" onClick={() => { setMode('login'); setOpenAuth(true); }}>Ya tengo cuenta</button>
+              <button className="submit-btn accent-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Crear cuenta</button>
+              <button className="ghost" onClick={() => { setMode('login'); setOpenAuth(true); }}>Ya tengo acceso</button>
             </div>
-            <div className="micro-pills">
+            <div className="micro-pills tape-pills">
               <span>Mercado Pago · Belo · bancos · efectivo</span>
-              <span>Cuotas, deudas y vencimientos</span>
-              <span>Comparador de rendimientos ARS</span>
+              <span>Seguimiento de cuotas sin humo</span>
+              <span>Comparador de rendimiento en ARS</span>
             </div>
           </div>
-          <div className="landing-preview">
-            <div className="preview-card big">
-              <span className="eyebrow">Dashboard</span>
-              <strong>$485.000</strong>
-              <p>Saldo total distribuido entre Mercado Pago, Belo y banco.</p>
+
+          <div className="landing-preview command-center">
+            <div className="console-card hero-console">
+              <div className="console-top">
+                <span className="eyebrow">Centro de control</span>
+                <span className="console-dot" />
+              </div>
+              <div className="big-peso">$485.000</div>
+              <p>Saldo total visible entre cuentas, efectivo y billeteras.</p>
+              <div className="signal-row">
+                <div><span>TNA más alta</span><strong>Belo 31.2%</strong></div>
+                <div><span>Compromiso mensual</span><strong>$135.000</strong></div>
+              </div>
             </div>
-            <div className="preview-grid">
-              <div className="preview-card"><span className="eyebrow">Deudas</span><strong>$50.000</strong></div>
-              <div className="preview-card"><span className="eyebrow">Cuotas</span><strong>$135.000</strong></div>
-              <div className="preview-card wide"><span className="eyebrow">Mejor rendimiento hoy</span><strong>Belo · 31.2% TNA</strong></div>
+            <div className="preview-grid offset-grid">
+              <div className="console-card narrow"><span className="eyebrow">Deuda neta</span><strong>$50.000</strong></div>
+              <div className="console-card narrow"><span className="eyebrow">Cuotas vivas</span><strong>4 meses</strong></div>
+              <div className="console-card wide trend-card">
+                <span className="eyebrow">Lectura del mes</span>
+                <strong>Entró sueldo. Se fue alquiler. Las suscripciones ya están pesando.</strong>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="landing-section two-col">
-          <div>
-            <span className="eyebrow">Qué resuelve</span>
-            <h2>Deja de manejar tu economía con memoria, capturas y notas sueltas.</h2>
+        <section className="landing-section manifesto-band">
+          <div className="manifesto-left">
+            <span className="eyebrow">Hecha para un contexto real</span>
+            <h2>La economía local no entra en un template de Silicon Valley.</h2>
           </div>
-          <div className="bullet-stack">
-            <div><strong>Cuentas separadas</strong><p>Sabé exactamente cuánto tenés en Mercado Pago, Belo, banco, efectivo y USD.</p></div>
-            <div><strong>Cuotas de verdad</strong><p>Entendé cuánto te compromete cada compra hoy y en los próximos meses.</p></div>
-            <div><strong>Deudas claras</strong><p>Registrá quién te debe, a quién le debés y qué se vence primero.</p></div>
+          <div className="manifesto-right bullet-stack editorial-stack">
+            <div><strong>Cuentas separadas de verdad</strong><p>Mercado Pago no es lo mismo que banco, efectivo o USD. Acá cada bolsillo se entiende por separado.</p></div>
+            <div><strong>Cuotas como primera clase</strong><p>No son un detalle: son una capa completa del flujo mensual y del futuro que ya comprometiste.</p></div>
+            <div><strong>Mejor decisión, no solo registro</strong><p>No alcanza con anotar. También necesitás saber dónde rinde más y qué movimiento te conviene hacer.</p></div>
           </div>
         </section>
 
-        <section className="landing-section cards-3">
-          <article className="landing-card">
-            <span className="eyebrow">Control</span>
-            <h3>Dashboard mensual</h3>
-            <p>Ingresos, egresos, saldo disponible, compromisos por cuotas y resumen por categoría.</p>
+        <section className="landing-section asym-grid">
+          <article className="landing-card feature-block tall">
+            <span className="eyebrow">01 · lectura</span>
+            <h3>Dashboard con criterio argentino</h3>
+            <p>Ingresos, egresos, saldo en ARS y USD, presión de cuotas, deudas y panorama mensual sin esconder lo importante atrás de veinte tabs.</p>
           </article>
-          <article className="landing-card">
-            <span className="eyebrow">Decisión</span>
-            <h3>Rendimiento en ARS</h3>
-            <p>Compará billeteras y elegí dónde te conviene tener la plata según la tasa del momento.</p>
+          <article className="landing-card feature-block">
+            <span className="eyebrow">02 · movimiento</span>
+            <h3>Billeteras, bancos y efectivo</h3>
+            <p>Visualizá dónde está la plata ahora mismo y no solo cuánto suma en total.</p>
           </article>
-          <article className="landing-card">
-            <span className="eyebrow">Seguimiento</span>
-            <h3>Todo en un solo lugar</h3>
-            <p>Movimientos, deudas, cuotas, presupuestos y cuentas sin depender de Excel ni cuadernos.</p>
+          <article className="landing-card feature-block">
+            <span className="eyebrow">03 · rendimiento</span>
+            <h3>Tasas para decidir rápido</h3>
+            <p>Compará opciones en ARS y detectá si estás dejando rendimiento sobre la mesa.</p>
           </article>
         </section>
 
-        <section className="pricing-strip">
+        <section className="pricing-strip founder-strip">
           <div>
             <span className="eyebrow">Precio fundador</span>
             <h2>$6.000 por mes</h2>
-            <p>Acceso completo a pesito.ar para ordenar tus finanzas, entender tus compromisos y tomar mejores decisiones con tu plata.</p>
+            <p>Para gente que necesita claridad, no una app linda vacía. Pesito.ar te ordena la foto completa de tu plata y te ayuda a decidir mejor.</p>
           </div>
-          <button className="submit-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Empezar ahora</button>
+          <div className="pricing-actions">
+            <button className="submit-btn accent-btn" onClick={() => { setMode('register'); setOpenAuth(true); }}>Empezar ahora</button>
+            <small>Login + app + suscripción en un solo flujo.</small>
+          </div>
         </section>
       </main>
 
@@ -827,7 +852,7 @@ function LandingScreen({ onAuth }) {
               {mode === 'register' && <Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />}
               <Field label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
               <Field label="Contraseña" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-              <button className="submit-btn full-btn">{loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
+              <button className="submit-btn full-btn accent-btn">{loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}</button>
               {error && <small className="error-text">{error}</small>}
               {mode === 'register' && supabase && <small className="hint-text">Si activás confirmación por email en Supabase, el alta va a requerir validación.</small>}
             </form>
