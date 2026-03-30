@@ -137,6 +137,25 @@ create table if not exists public.card_purchases (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.budgets (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  category text not null,
+  amount numeric not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.yield_rates (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text not null,
+  label text not null,
+  tna numeric not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists accounts_user_id_idx on public.accounts(user_id);
 create index if not exists transactions_user_id_idx on public.transactions(user_id);
 create index if not exists debts_user_id_idx on public.debts(user_id);
@@ -144,6 +163,8 @@ create index if not exists installments_user_id_idx on public.installments(user_
 create index if not exists credit_cards_user_id_idx on public.credit_cards(user_id);
 create index if not exists card_purchases_user_id_idx on public.card_purchases(user_id);
 create index if not exists card_purchases_card_id_idx on public.card_purchases(card_id);
+create index if not exists budgets_user_id_idx on public.budgets(user_id);
+create index if not exists yield_rates_user_id_idx on public.yield_rates(user_id);
 
 alter table public.accounts enable row level security;
 alter table public.transactions enable row level security;
@@ -151,13 +172,15 @@ alter table public.debts enable row level security;
 alter table public.installments enable row level security;
 alter table public.credit_cards enable row level security;
 alter table public.card_purchases enable row level security;
+alter table public.budgets enable row level security;
+alter table public.yield_rates enable row level security;
 
 do $$
 declare
   table_name text;
 begin
   for table_name in
-    select unnest(array['accounts', 'transactions', 'debts', 'installments', 'credit_cards', 'card_purchases'])
+    select unnest(array['accounts', 'transactions', 'debts', 'installments', 'credit_cards', 'card_purchases', 'budgets', 'yield_rates'])
   loop
     execute format('drop policy if exists "select_own_%1$s" on public.%1$s', table_name);
     execute format('drop policy if exists "insert_own_%1$s" on public.%1$s', table_name);

@@ -11,12 +11,16 @@ App argentina para controlar gastos, cuentas, deudas, cuotas, tarjetas y rendimi
   - cuotas
   - tarjetas
   - compras con tarjeta
+  - presupuestos
+  - rendimientos / yields
+- CRUD básico en UI para cuentas, movimientos, deudas, cuotas, tarjetas, compras con tarjeta, presupuestos y rendimientos
 - Carga/guardado por usuario autenticado
 - Seed automático la primera vez que entra un usuario autenticado
 - Módulo de tarjetas con:
   - próximo cierre
   - próximo vencimiento
-  - resumen próximo por tarjeta
+  - resumen a vencer
+  - ciclo siguiente
   - total comprometido por tarjeta
 
 ## Variables de entorno
@@ -47,7 +51,8 @@ Frontend / Vercel:
 - Si no configurás `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`, la app sigue funcionando en modo local.
 - Con Supabase activo, cada usuario ve su propia data.
 - La primera carga de un usuario nuevo inserta el seed inicial en sus tablas para dejar la app usable.
-- Hoy la app persiste altas e impactos básicos sobre saldos/disponible. No hay edición ni borrado todavía.
+- La app ya permite altas, edición y borrado básico con persistencia Supabase en los módulos principales.
+- Si agregás las tablas nuevas `budgets` y `yield_rates`, también queda persistida la capa de planificación.
 
 ## Scripts
 

@@ -6,8 +6,12 @@ import {
   Banknote,
   CreditCard,
   Landmark,
+  Pencil,
   PiggyBank,
   Plus,
+  Target,
+  Trash2,
+  TrendingUp,
   Wallet,
 } from 'lucide-react';
 import {
@@ -68,11 +72,11 @@ const seed = {
   yields: {
     updatedAt: new Date().toISOString(),
     rates: [
-      { provider: 'mercado-pago', label: 'Mercado Pago', tna: 28.4 },
-      { provider: 'belo', label: 'Belo', tna: 31.2 },
-      { provider: 'naranja-x', label: 'Naranja X', tna: 30.0 },
-      { provider: 'uala', label: 'Ualá', tna: 29.1 },
-      { provider: 'personal-pay', label: 'Personal Pay', tna: 29.7 },
+      { id: 'yield-1', provider: 'mercado-pago', label: 'Mercado Pago', tna: 28.4 },
+      { id: 'yield-2', provider: 'belo', label: 'Belo', tna: 31.2 },
+      { id: 'yield-3', provider: 'naranja-x', label: 'Naranja X', tna: 30.0 },
+      { id: 'yield-4', provider: 'uala', label: 'Ualá', tna: 29.1 },
+      { id: 'yield-5', provider: 'personal-pay', label: 'Personal Pay', tna: 29.7 },
     ],
   },
 };
@@ -86,14 +90,10 @@ const TABLES = {
   installments: 'installments',
   creditCards: 'credit_cards',
   cardPurchases: 'card_purchases',
+  budgets: 'budgets',
+  yields: 'yield_rates',
 };
-const accountIcons = {
-  wallet: Wallet,
-  bank: Landmark,
-  cash: Banknote,
-  savings: PiggyBank,
-  card: CreditCard,
-};
+const accountIcons = { wallet: Wallet, bank: Landmark, cash: Banknote, savings: PiggyBank, card: CreditCard };
 const palette = ['#1f4fff', '#6d8cff', '#b1c4ff', '#d6dffe', '#eef2ff', '#7e56da', '#d6c8ff'];
 
 function today(offset = 0) {
@@ -101,18 +101,18 @@ function today(offset = 0) {
   d.setDate(d.getDate() + offset);
   return d.toISOString().slice(0, 10);
 }
-function future(days = 0) {
-  return today(days);
-}
+function future(days = 0) { return today(days); }
 function formatMoney(value, currency = 'ARS') {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: currency === 'USD' ? 2 : 0,
-  }).format(value || 0);
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: currency === 'USD' ? 2 : 0 }).format(value || 0);
 }
-function parseNum(v) {
-  return Number(String(v).replace(',', '.')) || 0;
+function parseNum(v) { return Number(String(v).replace(',', '.')) || 0; }
+function formatDate(date) { return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' }).format(date); }
+function formatDateValue(date) { return new Date(date).toISOString().slice(0, 10); }
+function daysUntil(date) { return Math.ceil((new Date(date).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000); }
+function futureDateString(months, baseDate = new Date()) {
+  const next = new Date(baseDate);
+  next.setMonth(next.getMonth() + months);
+  return formatDateValue(next);
 }
 function mergeSeed(saved) {
   if (!saved || typeof saved !== 'object') return seed;
@@ -126,53 +126,46 @@ function mergeSeed(saved) {
     creditCards: Array.isArray(saved.creditCards) ? saved.creditCards : seed.creditCards,
     cardPurchases: Array.isArray(saved.cardPurchases) ? saved.cardPurchases : seed.cardPurchases,
     budgets: Array.isArray(saved.budgets) ? saved.budgets : seed.budgets,
-    yields: saved.yields && typeof saved.yields === 'object' ? { ...seed.yields, ...saved.yields } : seed.yields,
+    yields: saved.yields && typeof saved.yields === 'object' ? { ...seed.yields, ...saved.yields, rates: Array.isArray(saved.yields.rates) ? saved.yields.rates : seed.yields.rates } : seed.yields,
   };
 }
-function mergeRemoteData(remote) {
-  return {
-    ...seed,
-    ...remote,
-    budgets: seed.budgets,
-    yields: seed.yields,
-  };
-}
+function mergeRemoteData(remote) { return { ...seed, ...remote }; }
+function daysInMonth(year, monthIndex) { return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate(); }
 function nextCycleDate(dayOfMonth, from = new Date()) {
   const base = new Date(from);
   const date = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), 1));
-  const safeDay = Math.max(1, Math.min(dayOfMonth || 1, daysInMonth(date.getUTCFullYear(), date.getUTCMonth())));
-  date.setUTCDate(safeDay);
-  if (date < new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()))) {
+  date.setUTCDate(Math.max(1, Math.min(dayOfMonth || 1, daysInMonth(date.getUTCFullYear(), date.getUTCMonth()))));
+  const todayUtc = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
+  if (date < todayUtc) {
     date.setUTCMonth(date.getUTCMonth() + 1);
     date.setUTCDate(Math.max(1, Math.min(dayOfMonth || 1, daysInMonth(date.getUTCFullYear(), date.getUTCMonth()))));
   }
   return date;
 }
-function daysInMonth(year, monthIndex) {
-  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+function nextDueAfter(closeDate, dueDay) {
+  const date = new Date(closeDate);
+  date.setUTCMonth(date.getUTCMonth() + 1);
+  date.setUTCDate(Math.max(1, Math.min(dueDay || 1, daysInMonth(date.getUTCFullYear(), date.getUTCMonth()))));
+  return date;
 }
-function formatDate(date) {
-  return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' }).format(date);
+function addMonthsIso(isoDate, months = 1) {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return date.toISOString().slice(0, 10);
 }
-function mapAccountToDb(account, userId) {
-  return { id: account.id, user_id: userId, name: account.name, type: account.type, currency: account.currency, balance: account.balance, provider: account.provider };
+function getInstallmentsRemaining(purchase) {
+  return Math.max(0, purchase.installments - purchase.currentInstallment + 1);
 }
-function mapTransactionToDb(tx, userId) {
-  return { id: tx.id, user_id: userId, kind: tx.kind, amount: tx.amount, currency: tx.currency, account_id: tx.accountId, category: tx.category, note: tx.note, date: tx.date };
-}
-function mapDebtToDb(debt, userId) {
-  return { id: debt.id, user_id: userId, kind: debt.kind, person: debt.person, total: debt.total, remaining: debt.remaining, currency: debt.currency, due_date: debt.dueDate, note: debt.note };
-}
-function mapInstallmentToDb(inst, userId) {
-  return { id: inst.id, user_id: userId, title: inst.title, total: inst.total, installments: inst.installments, paid_count: inst.paidCount, installment_amount: inst.installmentAmount, currency: inst.currency, account_id: inst.accountId, category: inst.category };
-}
-function mapCreditCardToDb(card, userId) {
-  return { id: card.id, user_id: userId, name: card.name, bank: card.bank, closing_day: card.closingDay, due_day: card.dueDay, limit_amount: card.limit, available_amount: card.available, currency: card.currency };
-}
-function mapCardPurchaseToDb(purchase, userId) {
-  return { id: purchase.id, user_id: userId, card_id: purchase.cardId, title: purchase.title, total: purchase.total, installments: purchase.installments, current_installment: purchase.currentInstallment, installment_amount: purchase.installmentAmount, purchase_date: purchase.purchaseDate, next_due_month: purchase.nextDueMonth, category: purchase.category };
-}
+function mapAccountToDb(account, userId) { return { id: account.id, user_id: userId, name: account.name, type: account.type, currency: account.currency, balance: account.balance, provider: account.provider }; }
+function mapTransactionToDb(tx, userId) { return { id: tx.id, user_id: userId, kind: tx.kind, amount: tx.amount, currency: tx.currency, account_id: tx.accountId, category: tx.category, note: tx.note, date: tx.date }; }
+function mapDebtToDb(debt, userId) { return { id: debt.id, user_id: userId, kind: debt.kind, person: debt.person, total: debt.total, remaining: debt.remaining, currency: debt.currency, due_date: debt.dueDate, note: debt.note }; }
+function mapInstallmentToDb(inst, userId) { return { id: inst.id, user_id: userId, title: inst.title, total: inst.total, installments: inst.installments, paid_count: inst.paidCount, installment_amount: inst.installmentAmount, currency: inst.currency, account_id: inst.accountId, category: inst.category }; }
+function mapCreditCardToDb(card, userId) { return { id: card.id, user_id: userId, name: card.name, bank: card.bank, closing_day: card.closingDay, due_day: card.dueDay, limit_amount: card.limit, available_amount: card.available, currency: card.currency }; }
+function mapCardPurchaseToDb(purchase, userId) { return { id: purchase.id, user_id: userId, card_id: purchase.cardId, title: purchase.title, total: purchase.total, installments: purchase.installments, current_installment: purchase.currentInstallment, installment_amount: purchase.installmentAmount, purchase_date: purchase.purchaseDate, next_due_month: purchase.nextDueMonth, category: purchase.category }; }
+function mapBudgetToDb(item, userId) { return { id: item.id, user_id: userId, category: item.category, amount: item.amount }; }
+function mapYieldToDb(item, userId) { return { id: item.id, user_id: userId, provider: item.provider, label: item.label, tna: item.tna, updated_at: new Date().toISOString() }; }
 function fromDbBundle(bundle) {
+  const rates = (bundle.yields || []).map((row) => ({ id: row.id, provider: row.provider, label: row.label, tna: Number(row.tna || 0) }));
   return {
     accounts: (bundle.accounts || []).map((row) => ({ id: row.id, name: row.name, type: row.type, currency: row.currency, balance: Number(row.balance || 0), provider: row.provider || '' })),
     transactions: (bundle.transactions || []).map((row) => ({ id: row.id, kind: row.kind, amount: Number(row.amount || 0), currency: row.currency, accountId: row.account_id, category: row.category, note: row.note || '', date: row.date })),
@@ -180,80 +173,48 @@ function fromDbBundle(bundle) {
     installments: (bundle.installments || []).map((row) => ({ id: row.id, title: row.title, total: Number(row.total || 0), installments: Number(row.installments || 0), paidCount: Number(row.paid_count || 0), installmentAmount: Number(row.installment_amount || 0), currency: row.currency, accountId: row.account_id, category: row.category })),
     creditCards: (bundle.creditCards || []).map((row) => ({ id: row.id, name: row.name, bank: row.bank, closingDay: Number(row.closing_day || 0), dueDay: Number(row.due_day || 0), limit: Number(row.limit_amount || 0), available: Number(row.available_amount || 0), currency: row.currency })),
     cardPurchases: (bundle.cardPurchases || []).map((row) => ({ id: row.id, cardId: row.card_id, title: row.title, total: Number(row.total || 0), installments: Number(row.installments || 1), currentInstallment: Number(row.current_installment || 1), installmentAmount: Number(row.installment_amount || 0), purchaseDate: row.purchase_date, nextDueMonth: row.next_due_month, category: row.category })),
+    budgets: (bundle.budgets || []).map((row) => ({ id: row.id, category: row.category, amount: Number(row.amount || 0) })),
+    yields: { updatedAt: bundle.yields?.[0]?.updated_at || new Date().toISOString(), rates: rates.length ? rates : seed.yields.rates },
   };
 }
 
 export default function App() {
   const [auth, setAuth] = useState(() => {
-    try {
-      const saved = localStorage.getItem(AUTH_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+    try { const saved = localStorage.getItem(AUTH_KEY); return saved ? JSON.parse(saved) : null; } catch { return null; }
   });
   const [data, setData] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? mergeSeed(JSON.parse(saved)) : seed;
-    } catch {
-      return seed;
-    }
+    try { const saved = localStorage.getItem(STORAGE_KEY); return saved ? mergeSeed(JSON.parse(saved)) : seed; } catch { return seed; }
   });
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [showAccountForm, setShowAccountForm] = useState(false);
-  const [showTxForm, setShowTxForm] = useState(false);
-  const [showDebtForm, setShowDebtForm] = useState(false);
-  const [showInstForm, setShowInstForm] = useState(false);
-  const [showCardForm, setShowCardForm] = useState(false);
-  const [showCardPurchaseForm, setShowCardPurchaseForm] = useState(false);
+  const [modal, setModal] = useState(null);
   const [yieldStatus, setYieldStatus] = useState('idle');
   const [subStatus, setSubStatus] = useState('idle');
   const [dataStatus, setDataStatus] = useState('idle');
   const [syncError, setSyncError] = useState('');
   const seededUsersRef = useRef(new Set());
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
-
-  useEffect(() => {
-    if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
-    else localStorage.removeItem(AUTH_KEY);
-  }, [auth]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }, [data]);
+  useEffect(() => { if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth)); else localStorage.removeItem(AUTH_KEY); }, [auth]);
 
   useEffect(() => {
     if (!supabase) return;
-
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      if (user) setAuthFromUser(user);
-    });
-
+    supabase.auth.getSession().then(({ data }) => { const user = data.session?.user; if (user) setAuthFromUser(user); });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user;
       if (user) setAuthFromUser(user);
       else {
-        setAuth(null);
-        setData(seed);
-        setDataStatus('idle');
-        setSyncError('');
+        setAuth(null); setData(seed); setDataStatus('idle'); setSyncError('');
       }
     });
-
     return () => listener.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!auth?.id) return;
-    if (!supabase) {
-      setDataStatus('local');
-      return;
-    }
+    if (!supabase) { setDataStatus('local'); return; }
     let cancelled = false;
     (async () => {
-      setDataStatus('loading');
-      setSyncError('');
+      setDataStatus('loading'); setSyncError('');
       try {
         const remote = await loadRemoteData(auth.id);
         if (cancelled) return;
@@ -275,18 +236,11 @@ export default function App() {
         setSyncError(error.message || 'No se pudieron cargar tus datos');
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [auth?.id]);
 
   function setAuthFromUser(user) {
-    setAuth({
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.name || user.email,
-      plan: user.user_metadata?.plan || 'free',
-    });
+    setAuth({ id: user.id, email: user.email, name: user.user_metadata?.name || user.email, plan: user.user_metadata?.plan || 'free' });
   }
 
   const arsAccounts = data.accounts.filter((a) => a.currency === 'ARS');
@@ -301,27 +255,30 @@ export default function App() {
   const totalCardLimit = data.creditCards.reduce((s, c) => s + c.limit, 0);
   const totalCardAvailable = data.creditCards.reduce((s, c) => s + c.available, 0);
 
+  const budgetsView = useMemo(() => {
+    const expensesByCategory = new Map();
+    monthTransactions.filter((t) => t.kind === 'expense').forEach((tx) => expensesByCategory.set(tx.category, (expensesByCategory.get(tx.category) || 0) + tx.amount));
+    return data.budgets.map((budget) => {
+      const spent = expensesByCategory.get(budget.category) || 0;
+      const pct = budget.amount ? Math.min(160, (spent / budget.amount) * 100) : 0;
+      return { ...budget, spent, remaining: budget.amount - spent, pct };
+    }).sort((a, b) => b.pct - a.pct);
+  }, [data.budgets, monthTransactions]);
+
   const cardsSummary = useMemo(() => {
     const now = new Date();
-    return data.creditCards
-      .map((card) => {
-        const purchases = data.cardPurchases.filter((purchase) => purchase.cardId === card.id);
-        const nextClosingDate = nextCycleDate(card.closingDay, now);
-        const nextDueDate = nextCycleDate(card.dueDay, now);
-        const nextStatementAmount = purchases.reduce((sum, purchase) => sum + purchase.installmentAmount, 0);
-        const totalCommitted = purchases.reduce((sum, purchase) => sum + purchase.installmentAmount * Math.max(0, purchase.installments - purchase.currentInstallment + 1), 0);
-        const utilization = card.limit ? ((card.limit - card.available) / card.limit) * 100 : 0;
-        return {
-          ...card,
-          purchases,
-          nextClosingDate,
-          nextDueDate,
-          nextStatementAmount,
-          totalCommitted,
-          utilization,
-        };
-      })
-      .sort((a, b) => a.nextDueDate - b.nextDueDate);
+    return data.creditCards.map((card) => {
+      const purchases = data.cardPurchases.filter((purchase) => purchase.cardId === card.id);
+      const nextClosingDate = nextCycleDate(card.closingDay, now);
+      const nextDueDate = nextDueAfter(nextClosingDate, card.dueDay);
+      const secondDueDate = nextDueAfter(nextCycleDate(card.closingDay, new Date(nextClosingDate.getTime() + 86400000)), card.dueDay);
+      const nextStatementAmount = purchases.filter((purchase) => purchase.nextDueMonth && purchase.nextDueMonth <= formatDateValue(nextDueDate) && getInstallmentsRemaining(purchase) > 0).reduce((sum, purchase) => sum + purchase.installmentAmount, 0);
+      const followingStatementAmount = purchases.filter((purchase) => purchase.nextDueMonth && purchase.nextDueMonth > formatDateValue(nextDueDate) && purchase.nextDueMonth <= formatDateValue(secondDueDate) && getInstallmentsRemaining(purchase) > 0).reduce((sum, purchase) => sum + purchase.installmentAmount, 0);
+      const totalCommitted = purchases.reduce((sum, purchase) => sum + purchase.installmentAmount * getInstallmentsRemaining(purchase), 0);
+      const utilization = card.limit ? ((card.limit - card.available) / card.limit) * 100 : 0;
+      const urgentPurchases = purchases.filter((purchase) => purchase.nextDueMonth && purchase.nextDueMonth <= formatDateValue(nextDueDate)).sort((a, b) => a.nextDueMonth.localeCompare(b.nextDueMonth));
+      return { ...card, purchases, nextClosingDate, nextDueDate, secondDueDate, nextStatementAmount, followingStatementAmount, totalCommitted, utilization, urgentPurchases };
+    }).sort((a, b) => a.nextDueDate - b.nextDueDate);
   }, [data.cardPurchases, data.creditCards]);
 
   const nextCardDue = cardsSummary.reduce((sum, card) => sum + card.nextStatementAmount, 0);
@@ -329,46 +286,22 @@ export default function App() {
 
   const categoryData = useMemo(() => {
     const map = new Map();
-    monthTransactions.filter((t) => t.kind === 'expense').forEach((tx) => {
-      map.set(tx.category, (map.get(tx.category) || 0) + tx.amount);
-    });
+    monthTransactions.filter((t) => t.kind === 'expense').forEach((tx) => map.set(tx.category, (map.get(tx.category) || 0) + tx.amount));
     return [...map.entries()].map(([name, value]) => ({ name, value }));
   }, [monthTransactions]);
 
   const accountsPie = arsAccounts.map((acc) => ({ name: acc.name, value: acc.balance }));
-
   const monthlyBars = useMemo(() => {
     const months = {};
-    data.transactions.forEach((tx) => {
-      const key = tx.date.slice(0, 7);
-      if (!months[key]) months[key] = { month: key, ingresos: 0, gastos: 0 };
-      months[key][tx.kind === 'income' ? 'ingresos' : 'gastos'] += tx.amount;
-    });
+    data.transactions.forEach((tx) => { const key = tx.date.slice(0, 7); if (!months[key]) months[key] = { month: key, ingresos: 0, gastos: 0 }; months[key][tx.kind === 'income' ? 'ingresos' : 'gastos'] += tx.amount; });
     return Object.values(months).slice(-6);
   }, [data.transactions]);
-
   const timeline = useMemo(() => {
     let running = 0;
-    return [...monthTransactions]
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((tx) => {
-        running += tx.kind === 'income' ? tx.amount : -tx.amount;
-        return { date: tx.date.slice(5), saldo: running };
-      });
+    return [...monthTransactions].sort((a, b) => a.date.localeCompare(b.date)).map((tx) => { running += tx.kind === 'income' ? tx.amount : -tx.amount; return { date: tx.date.slice(5), saldo: running }; });
   }, [monthTransactions]);
-
-  const bestYield = useMemo(() => {
-    if (!data.yields?.rates?.length) return null;
-    return [...data.yields.rates].sort((a, b) => b.tna - a.tna)[0];
-  }, [data.yields]);
-
-  const currentYieldAccounts = arsAccounts
-    .map((acc) => {
-      const rate = data.yields.rates.find((r) => r.provider === acc.provider);
-      return rate ? { ...acc, tna: rate.tna, label: rate.label } : null;
-    })
-    .filter(Boolean);
-
+  const bestYield = useMemo(() => data.yields?.rates?.length ? [...data.yields.rates].sort((a, b) => b.tna - a.tna)[0] : null, [data.yields]);
+  const currentYieldAccounts = arsAccounts.map((acc) => { const rate = data.yields.rates.find((r) => r.provider === acc.provider); return rate ? { ...acc, tna: rate.tna, label: rate.label } : null; }).filter(Boolean);
   const recommendation = useMemo(() => {
     if (!bestYield || !currentYieldAccounts.length) return null;
     const highestBalanceAccount = [...currentYieldAccounts].sort((a, b) => b.balance - a.balance)[0];
@@ -378,26 +311,19 @@ export default function App() {
   }, [bestYield, currentYieldAccounts]);
 
   async function loadRemoteData(userId) {
-    const [accounts, transactions, debts, installments, creditCards, cardPurchases] = await Promise.all([
+    const [accounts, transactions, debts, installments, creditCards, cardPurchases, budgets, yields] = await Promise.all([
       supabase.from(TABLES.accounts).select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from(TABLES.transactions).select('*').eq('user_id', userId).order('date', { ascending: false }),
       supabase.from(TABLES.debts).select('*').eq('user_id', userId).order('due_date', { ascending: true }),
       supabase.from(TABLES.installments).select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from(TABLES.creditCards).select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from(TABLES.cardPurchases).select('*').eq('user_id', userId).order('purchase_date', { ascending: false }),
+      supabase.from(TABLES.budgets).select('*').eq('user_id', userId).order('category', { ascending: true }),
+      supabase.from(TABLES.yields).select('*').eq('user_id', userId).order('tna', { ascending: false }),
     ]);
-
-    const firstError = [accounts, transactions, debts, installments, creditCards, cardPurchases].find((result) => result.error)?.error;
+    const firstError = [accounts, transactions, debts, installments, creditCards, cardPurchases, budgets, yields].find((result) => result.error)?.error;
     if (firstError) throw firstError;
-
-    return {
-      accounts: accounts.data || [],
-      transactions: transactions.data || [],
-      debts: debts.data || [],
-      installments: installments.data || [],
-      creditCards: creditCards.data || [],
-      cardPurchases: cardPurchases.data || [],
-    };
+    return { accounts: accounts.data || [], transactions: transactions.data || [], debts: debts.data || [], installments: installments.data || [], creditCards: creditCards.data || [], cardPurchases: cardPurchases.data || [], budgets: budgets.data || [], yields: yields.data || [] };
   }
 
   async function seedRemoteData(userId) {
@@ -408,296 +334,212 @@ export default function App() {
       supabase.from(TABLES.installments).insert(seed.installments.map((item) => mapInstallmentToDb(item, userId))),
       supabase.from(TABLES.creditCards).insert(seed.creditCards.map((item) => mapCreditCardToDb(item, userId))),
       supabase.from(TABLES.cardPurchases).insert(seed.cardPurchases.map((item) => mapCardPurchaseToDb(item, userId))),
+      supabase.from(TABLES.budgets).insert(seed.budgets.map((item) => mapBudgetToDb(item, userId))),
+      supabase.from(TABLES.yields).insert(seed.yields.rates.map((item) => mapYieldToDb(item, userId))),
     ];
     const results = await Promise.all(inserts);
     const error = results.find((result) => result.error)?.error;
     if (error) throw error;
   }
 
-  async function insertRemote(table, payload) {
-    if (!supabase || !auth?.id) return;
-    const { error } = await supabase.from(table).insert(payload);
-    if (error) throw error;
-  }
+  async function insertRemote(table, payload) { if (!supabase || !auth?.id) return; const { error } = await supabase.from(table).insert(payload); if (error) throw error; }
+  async function updateRemote(table, id, payload) { if (!supabase || !auth?.id) return; const { error } = await supabase.from(table).update(payload).eq('id', id).eq('user_id', auth.id); if (error) throw error; }
+  async function deleteRemote(table, id) { if (!supabase || !auth?.id) return; const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', auth.id); if (error) throw error; }
+  async function syncAccountBalance(accountId, balance) { if (!supabase || !auth?.id || !accountId) return; const { error } = await supabase.from(TABLES.accounts).update({ balance }).eq('id', accountId).eq('user_id', auth.id); if (error) throw error; }
+  async function syncCardAvailable(cardId, available) { if (!supabase || !auth?.id || !cardId) return; const { error } = await supabase.from(TABLES.creditCards).update({ available_amount: available }).eq('id', cardId).eq('user_id', auth.id); if (error) throw error; }
 
-  async function updateCardAvailableRemote(cardId, available) {
-    if (!supabase || !auth?.id) return;
-    const { error } = await supabase.from(TABLES.creditCards).update({ available_amount: available }).eq('id', cardId).eq('user_id', auth.id);
-    if (error) throw error;
-  }
+  function openCreate(type) { setModal({ type, mode: 'create' }); }
+  function openEdit(type, item) { setModal({ type, mode: 'edit', item }); }
+  function closeModal() { setModal(null); }
+  function fail(error, fallback) { setSyncError(error.message || fallback); }
 
   async function refreshYields() {
     setYieldStatus('loading');
     try {
-      const fresh = { updatedAt: new Date().toISOString(), rates: seed.yields.rates };
-      setData((prev) => ({ ...prev, yields: fresh }));
+      const refreshedRates = seed.yields.rates.map((rate) => ({ ...rate, tna: Number(rate.tna) }));
+      if (supabase && auth?.id) {
+        await Promise.all(data.yields.rates.map((rate) => deleteRemote(TABLES.yields, rate.id).catch(() => null)));
+        await insertRemote(TABLES.yields, refreshedRates.map((rate) => mapYieldToDb(rate, auth.id)));
+      }
+      setData((prev) => ({ ...prev, yields: { updatedAt: new Date().toISOString(), rates: refreshedRates } }));
       setYieldStatus('done');
-    } catch {
+      setSyncError('');
+    } catch (error) {
       setYieldStatus('error');
+      fail(error, 'No pude actualizar rendimientos');
     }
   }
 
-  async function addAccount(form) {
-    const account = { id: crypto.randomUUID(), name: form.name, type: form.type, currency: form.currency, balance: parseNum(form.balance), provider: form.provider || form.name.toLowerCase().replace(/\s+/g, '-') };
+  async function saveAccount(form, current) {
+    const account = { id: current?.id || crypto.randomUUID(), name: form.name, type: form.type, currency: form.currency, balance: parseNum(form.balance), provider: form.provider || form.name.toLowerCase().replace(/\s+/g, '-') };
     try {
-      await insertRemote(TABLES.accounts, mapAccountToDb(account, auth?.id));
-      setData((prev) => ({ ...prev, accounts: [account, ...prev.accounts] }));
-      setShowAccountForm(false);
-      setSyncError('');
-    } catch (error) {
-      setSyncError(error.message || 'No pude guardar la cuenta');
-    }
+      if (current) await updateRemote(TABLES.accounts, current.id, mapAccountToDb(account, auth?.id));
+      else await insertRemote(TABLES.accounts, mapAccountToDb(account, auth?.id));
+      setData((prev) => ({ ...prev, accounts: current ? prev.accounts.map((item) => item.id === current.id ? account : item) : [account, ...prev.accounts] }));
+      closeModal(); setSyncError('');
+    } catch (error) { fail(error, 'No pude guardar la cuenta'); }
   }
-  async function addTransaction(form) {
+  async function deleteAccount(item) {
+    const hasLinks = data.transactions.some((tx) => tx.accountId === item.id) || data.installments.some((inst) => inst.accountId === item.id);
+    if (hasLinks) return setSyncError('No podés borrar una cuenta con movimientos o cuotas asociadas.');
+    try { await deleteRemote(TABLES.accounts, item.id); setData((prev) => ({ ...prev, accounts: prev.accounts.filter((acc) => acc.id !== item.id) })); setSyncError(''); } catch (error) { fail(error, 'No pude borrar la cuenta'); }
+  }
+
+  async function saveTransaction(form, current) {
     const amount = parseNum(form.amount);
-    const tx = { id: crypto.randomUUID(), kind: form.kind, amount, currency: form.currency, accountId: form.accountId, category: form.category, note: form.note, date: form.date };
-    const nextAccounts = data.accounts.map((acc) => acc.id === form.accountId ? { ...acc, balance: acc.balance + (form.kind === 'income' ? amount : -amount) } : acc);
+    const tx = { id: current?.id || crypto.randomUUID(), kind: form.kind, amount, currency: form.currency, accountId: form.accountId, category: form.category, note: form.note, date: form.date };
+    const balances = new Map(data.accounts.map((acc) => [acc.id, acc.balance]));
+    const revert = (item) => item ? (item.kind === 'income' ? -item.amount : item.amount) : 0;
+    const apply = (item) => item.kind === 'income' ? item.amount : -item.amount;
+    if (current?.accountId) balances.set(current.accountId, (balances.get(current.accountId) || 0) + revert(current));
+    if (tx.accountId) balances.set(tx.accountId, (balances.get(tx.accountId) || 0) + apply(tx));
+    const nextAccounts = data.accounts.map((acc) => balances.has(acc.id) ? { ...acc, balance: balances.get(acc.id) } : acc);
     try {
-      await insertRemote(TABLES.transactions, mapTransactionToDb(tx, auth?.id));
-      const targetAccount = nextAccounts.find((acc) => acc.id === form.accountId);
-      if (targetAccount && supabase && auth?.id) {
-        const { error } = await supabase.from(TABLES.accounts).update({ balance: targetAccount.balance }).eq('id', targetAccount.id).eq('user_id', auth.id);
-        if (error) throw error;
-      }
-      setData((prev) => ({ ...prev, transactions: [tx, ...prev.transactions], accounts: nextAccounts }));
-      setShowTxForm(false);
-      setSyncError('');
-    } catch (error) {
-      setSyncError(error.message || 'No pude guardar el movimiento');
-    }
+      if (current) await updateRemote(TABLES.transactions, current.id, mapTransactionToDb(tx, auth?.id));
+      else await insertRemote(TABLES.transactions, mapTransactionToDb(tx, auth?.id));
+      await Promise.all(nextAccounts.filter((acc) => balances.has(acc.id)).map((acc) => syncAccountBalance(acc.id, acc.balance)));
+      setData((prev) => ({ ...prev, transactions: current ? prev.transactions.map((item) => item.id === current.id ? tx : item) : [tx, ...prev.transactions], accounts: nextAccounts }));
+      closeModal(); setSyncError('');
+    } catch (error) { fail(error, 'No pude guardar el movimiento'); }
   }
-  async function addDebt(form) {
-    const debt = { id: crypto.randomUUID(), kind: form.kind, person: form.person, total: parseNum(form.total), remaining: parseNum(form.total), currency: form.currency, dueDate: form.dueDate, note: form.note };
+  async function deleteTransaction(item) {
+    const nextBalance = (data.accounts.find((acc) => acc.id === item.accountId)?.balance || 0) + (item.kind === 'income' ? -item.amount : item.amount);
     try {
-      await insertRemote(TABLES.debts, mapDebtToDb(debt, auth?.id));
-      setData((prev) => ({ ...prev, debts: [debt, ...prev.debts] }));
-      setShowDebtForm(false);
+      await deleteRemote(TABLES.transactions, item.id);
+      if (item.accountId) await syncAccountBalance(item.accountId, nextBalance);
+      setData((prev) => ({ ...prev, transactions: prev.transactions.filter((tx) => tx.id !== item.id), accounts: prev.accounts.map((acc) => acc.id === item.accountId ? { ...acc, balance: nextBalance } : acc) }));
       setSyncError('');
-    } catch (error) {
-      setSyncError(error.message || 'No pude guardar la deuda');
-    }
+    } catch (error) { fail(error, 'No pude borrar el movimiento'); }
   }
-  async function addInstallment(form) {
-    const total = parseNum(form.total);
-    const installments = Math.max(1, parseNum(form.installments));
-    const plan = { id: crypto.randomUUID(), title: form.title, total, installments, paidCount: parseNum(form.paidCount), installmentAmount: total / installments, currency: form.currency, accountId: form.accountId, category: form.category };
+
+  async function saveDebt(form, current) {
+    const total = parseNum(form.total); const remaining = parseNum(form.remaining || form.total);
+    const debt = { id: current?.id || crypto.randomUUID(), kind: form.kind, person: form.person, total, remaining, currency: form.currency, dueDate: form.dueDate, note: form.note };
+    try { current ? await updateRemote(TABLES.debts, current.id, mapDebtToDb(debt, auth?.id)) : await insertRemote(TABLES.debts, mapDebtToDb(debt, auth?.id)); setData((prev) => ({ ...prev, debts: current ? prev.debts.map((item) => item.id === current.id ? debt : item) : [debt, ...prev.debts] })); closeModal(); setSyncError(''); } catch (error) { fail(error, 'No pude guardar la deuda'); }
+  }
+  async function deleteDebt(item) { try { await deleteRemote(TABLES.debts, item.id); setData((prev) => ({ ...prev, debts: prev.debts.filter((debt) => debt.id !== item.id) })); setSyncError(''); } catch (error) { fail(error, 'No pude borrar la deuda'); } }
+
+  async function saveInstallment(form, current) {
+    const total = parseNum(form.total); const installments = Math.max(1, parseNum(form.installments));
+    const plan = { id: current?.id || crypto.randomUUID(), title: form.title, total, installments, paidCount: parseNum(form.paidCount), installmentAmount: total / installments, currency: form.currency, accountId: form.accountId, category: form.category };
+    try { current ? await updateRemote(TABLES.installments, current.id, mapInstallmentToDb(plan, auth?.id)) : await insertRemote(TABLES.installments, mapInstallmentToDb(plan, auth?.id)); setData((prev) => ({ ...prev, installments: current ? prev.installments.map((item) => item.id === current.id ? plan : item) : [plan, ...prev.installments] })); closeModal(); setSyncError(''); } catch (error) { fail(error, 'No pude guardar la cuota'); }
+  }
+  async function deleteInstallment(item) { try { await deleteRemote(TABLES.installments, item.id); setData((prev) => ({ ...prev, installments: prev.installments.filter((inst) => inst.id !== item.id) })); setSyncError(''); } catch (error) { fail(error, 'No pude borrar la cuota'); } }
+
+  async function saveCreditCard(form, current) {
+    const card = { id: current?.id || crypto.randomUUID(), name: form.name, bank: form.bank, closingDay: parseNum(form.closingDay), dueDay: parseNum(form.dueDay), limit: parseNum(form.limit), available: parseNum(form.available), currency: form.currency };
+    try { current ? await updateRemote(TABLES.creditCards, current.id, mapCreditCardToDb(card, auth?.id)) : await insertRemote(TABLES.creditCards, mapCreditCardToDb(card, auth?.id)); setData((prev) => ({ ...prev, creditCards: current ? prev.creditCards.map((item) => item.id === current.id ? card : item) : [card, ...prev.creditCards] })); closeModal(); setSyncError(''); } catch (error) { fail(error, 'No pude guardar la tarjeta'); }
+  }
+  async function deleteCreditCard(item) {
+    if (data.cardPurchases.some((purchase) => purchase.cardId === item.id)) return setSyncError('No podés borrar una tarjeta con compras asociadas.');
+    try { await deleteRemote(TABLES.creditCards, item.id); setData((prev) => ({ ...prev, creditCards: prev.creditCards.filter((card) => card.id !== item.id) })); setSyncError(''); } catch (error) { fail(error, 'No pude borrar la tarjeta'); }
+  }
+
+  async function saveCardPurchase(form, current) {
+    const total = parseNum(form.total); const installments = Math.max(1, parseNum(form.installments));
+    const purchase = { id: current?.id || crypto.randomUUID(), cardId: form.cardId, title: form.title, total, installments, currentInstallment: parseNum(form.currentInstallment) || 1, installmentAmount: total / installments, purchaseDate: form.purchaseDate, nextDueMonth: form.nextDueMonth, category: form.category };
+    const previousCard = current ? data.creditCards.find((card) => card.id === current.cardId) : null;
+    const nextCard = data.creditCards.find((card) => card.id === form.cardId);
+    const cardAvailables = new Map(data.creditCards.map((card) => [card.id, card.available]));
+    if (current?.cardId) cardAvailables.set(current.cardId, (cardAvailables.get(current.cardId) || 0) + current.total);
+    if (purchase.cardId) cardAvailables.set(purchase.cardId, Math.max(0, (cardAvailables.get(purchase.cardId) || nextCard?.limit || 0) - purchase.total));
     try {
-      await insertRemote(TABLES.installments, mapInstallmentToDb(plan, auth?.id));
-      setData((prev) => ({ ...prev, installments: [plan, ...prev.installments] }));
-      setShowInstForm(false);
-      setSyncError('');
-    } catch (error) {
-      setSyncError(error.message || 'No pude guardar la cuota');
-    }
+      current ? await updateRemote(TABLES.cardPurchases, current.id, mapCardPurchaseToDb(purchase, auth?.id)) : await insertRemote(TABLES.cardPurchases, mapCardPurchaseToDb(purchase, auth?.id));
+      if (previousCard) await syncCardAvailable(previousCard.id, cardAvailables.get(previousCard.id));
+      if (nextCard) await syncCardAvailable(nextCard.id, cardAvailables.get(nextCard.id));
+      setData((prev) => ({ ...prev, cardPurchases: current ? prev.cardPurchases.map((item) => item.id === current.id ? purchase : item) : [purchase, ...prev.cardPurchases], creditCards: prev.creditCards.map((card) => cardAvailables.has(card.id) ? { ...card, available: cardAvailables.get(card.id) } : card) }));
+      closeModal(); setSyncError('');
+    } catch (error) { fail(error, 'No pude guardar la compra con tarjeta'); }
   }
-  async function addCreditCard(form) {
-    const card = { id: crypto.randomUUID(), name: form.name, bank: form.bank, closingDay: parseNum(form.closingDay), dueDay: parseNum(form.dueDay), limit: parseNum(form.limit), available: parseNum(form.available), currency: form.currency };
+  async function deleteCardPurchase(item) {
+    const nextAvailable = (data.creditCards.find((card) => card.id === item.cardId)?.available || 0) + item.total;
     try {
-      await insertRemote(TABLES.creditCards, mapCreditCardToDb(card, auth?.id));
-      setData((prev) => ({ ...prev, creditCards: [card, ...prev.creditCards] }));
-      setShowCardForm(false);
+      await deleteRemote(TABLES.cardPurchases, item.id);
+      await syncCardAvailable(item.cardId, nextAvailable);
+      setData((prev) => ({ ...prev, cardPurchases: prev.cardPurchases.filter((purchase) => purchase.id !== item.id), creditCards: prev.creditCards.map((card) => card.id === item.cardId ? { ...card, available: nextAvailable } : card) }));
       setSyncError('');
-    } catch (error) {
-      setSyncError(error.message || 'No pude guardar la tarjeta');
-    }
+    } catch (error) { fail(error, 'No pude borrar la compra con tarjeta'); }
   }
-  async function addCardPurchase(form) {
-    const total = parseNum(form.total);
-    const installments = Math.max(1, parseNum(form.installments));
-    const purchase = { id: crypto.randomUUID(), cardId: form.cardId, title: form.title, total, installments, currentInstallment: parseNum(form.currentInstallment) || 1, installmentAmount: total / installments, purchaseDate: form.purchaseDate, nextDueMonth: form.nextDueMonth, category: form.category };
-    const card = data.creditCards.find((item) => item.id === form.cardId);
-    const nextAvailable = Math.max(0, (card?.available || 0) - total);
+
+  async function saveBudget(form, current) {
+    const budget = { id: current?.id || crypto.randomUUID(), category: form.category, amount: parseNum(form.amount) };
+    try { current ? await updateRemote(TABLES.budgets, current.id, mapBudgetToDb(budget, auth?.id)) : await insertRemote(TABLES.budgets, mapBudgetToDb(budget, auth?.id)); setData((prev) => ({ ...prev, budgets: current ? prev.budgets.map((item) => item.id === current.id ? budget : item) : [...prev.budgets, budget] })); closeModal(); setSyncError(''); } catch (error) { fail(error, 'No pude guardar el presupuesto'); }
+  }
+  async function deleteBudget(item) { try { await deleteRemote(TABLES.budgets, item.id); setData((prev) => ({ ...prev, budgets: prev.budgets.filter((budget) => budget.id !== item.id) })); setSyncError(''); } catch (error) { fail(error, 'No pude borrar el presupuesto'); } }
+  async function saveYield(form, current) {
+    const rate = { id: current?.id || crypto.randomUUID(), provider: form.provider, label: form.label, tna: parseNum(form.tna) };
     try {
-      await insertRemote(TABLES.cardPurchases, mapCardPurchaseToDb(purchase, auth?.id));
-      if (card) await updateCardAvailableRemote(card.id, nextAvailable);
-      setData((prev) => ({
-        ...prev,
-        cardPurchases: [purchase, ...prev.cardPurchases],
-        creditCards: prev.creditCards.map((item) => item.id === form.cardId ? { ...item, available: nextAvailable } : item),
-      }));
-      setShowCardPurchaseForm(false);
-      setSyncError('');
-    } catch (error) {
-      setSyncError(error.message || 'No pude guardar la compra con tarjeta');
-    }
+      current ? await updateRemote(TABLES.yields, current.id, mapYieldToDb(rate, auth?.id)) : await insertRemote(TABLES.yields, mapYieldToDb(rate, auth?.id));
+      setData((prev) => ({ ...prev, yields: { updatedAt: new Date().toISOString(), rates: current ? prev.yields.rates.map((item) => item.id === current.id ? rate : item) : [...prev.yields.rates, rate] } }));
+      closeModal(); setSyncError('');
+    } catch (error) { fail(error, 'No pude guardar el rendimiento'); }
   }
+  async function deleteYield(item) { try { await deleteRemote(TABLES.yields, item.id); setData((prev) => ({ ...prev, yields: { updatedAt: prev.yields.updatedAt, rates: prev.yields.rates.filter((rate) => rate.id !== item.id) } })); setSyncError(''); } catch (error) { fail(error, 'No pude borrar el rendimiento'); } }
 
   async function startSubscription() {
     try {
       setSubStatus('loading');
-      const response = await fetch('/api/create-subscription-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: auth?.email || '', userId: auth?.id || null }),
-      });
+      const response = await fetch('/api/create-subscription-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: auth?.email || '', userId: auth?.id || null }) });
       const data = await response.json();
       const checkoutUrl = data.checkoutUrl || data.url || data.initPoint || data.link;
       if (!response.ok || !checkoutUrl) throw new Error(data.error || 'No se pudo generar el link');
       window.location.href = checkoutUrl;
-    } catch (error) {
-      console.error(error);
-      setSubStatus('error');
-    }
+    } catch (error) { console.error(error); setSubStatus('error'); }
   }
-
   async function handleAuth(payload, mode) {
     if (supabase) {
-      if (mode === 'register') {
-        const { error } = await supabase.auth.signUp({ email: payload.email, password: payload.password, options: { data: { name: payload.name } } });
-        if (error) throw error;
-        return;
-      }
-      const { error } = await supabase.auth.signInWithPassword({ email: payload.email, password: payload.password });
-      if (error) throw error;
-      return;
+      if (mode === 'register') { const { error } = await supabase.auth.signUp({ email: payload.email, password: payload.password, options: { data: { name: payload.name } } }); if (error) throw error; return; }
+      const { error } = await supabase.auth.signInWithPassword({ email: payload.email, password: payload.password }); if (error) throw error; return;
     }
     setAuth({ ...payload, plan: 'free' });
   }
 
   if (!auth) return <LandingScreen onAuth={handleAuth} />;
 
-  return (
-    <div className="app-shell">
-      <div className="noise" />
-      <aside className="sidebar">
-        <div>
-          <span className="eyebrow">Control financiero</span>
-          <h1>pesito.ar</h1>
-          <p>Una app argentina para ver tu plata real, tus deudas, tus cuotas y dónde te conviene tener los pesos.</p>
-          <div className="user-chip">{auth.name || auth.email}</div>
-          <small className="sync-chip">{dataStatus === 'loading' ? 'Sincronizando con Supabase…' : dataStatus === 'ready' ? 'Datos guardados por usuario' : dataStatus === 'local' ? 'Modo local sin Supabase' : dataStatus === 'error' ? 'Error de sincronización' : 'Listo'}</small>
-          {syncError && <small className="error-text">{syncError}</small>}
-        </div>
-        <nav className="sidebar-nav">
-          {[
-            ['dashboard', 'Dashboard'],
-            ['accounts', 'Cuentas'],
-            ['transactions', 'Movimientos'],
-            ['debts', 'Deudas'],
-            ['installments', 'Cuotas'],
-            ['cards', 'Tarjetas'],
-          ].map(([id, label]) => (
-            <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>{label}</button>
-          ))}
-        </nav>
-        <div className="sidebar-note">
-          <strong>ARS hoy</strong>
-          <span>{formatMoney(arsTotal)}</span>
-          <small>{bestYield ? `Mejor TNA actual: ${bestYield.label} · ${bestYield.tna}%` : 'Sin datos de rendimiento'}</small>
-          {closestCard && <small>Próximo vencimiento: {closestCard.name} · {formatDate(closestCard.nextDueDate)}</small>}
-        </div>
-        <div className="subscription-card">
-          <span className="eyebrow">Suscripción</span>
-          <h3>pesito.ar Pro</h3>
-          <p>$6.000 por mes para usar la app con seguimiento completo.</p>
-          <button className="submit-btn full-btn" onClick={startSubscription}>{subStatus === 'loading' ? 'Generando link…' : 'Suscribirme'}</button>
-          {subStatus === 'error' && <small className="error-text">No pude generar el link de pago. Revisá el backend/API key.</small>}
-          <button className="logout-btn" onClick={async () => { if (supabase) await supabase.auth.signOut(); setAuth(null); }}>Cerrar sesión</button>
-        </div>
-      </aside>
+  return <div className="app-shell"><div className="noise" /><aside className="sidebar"><div><span className="eyebrow">Control financiero</span><h1>pesito.ar</h1><p>Una app argentina para ver tu plata real, tus deudas, tus cuotas y dónde te conviene tener los pesos.</p><div className="user-chip">{auth.name || auth.email}</div><small className="sync-chip">{dataStatus === 'loading' ? 'Sincronizando con Supabase…' : dataStatus === 'ready' ? 'Datos guardados por usuario' : dataStatus === 'local' ? 'Modo local sin Supabase' : dataStatus === 'error' ? 'Error de sincronización' : 'Listo'}</small>{syncError && <small className="error-text">{syncError}</small>}</div><nav className="sidebar-nav">{[['dashboard', 'Dashboard'], ['accounts', 'Cuentas'], ['transactions', 'Movimientos'], ['debts', 'Deudas'], ['installments', 'Cuotas'], ['cards', 'Tarjetas'], ['planning', 'Planificación']].map(([id, label]) => <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>{label}</button>)}</nav><div className="sidebar-note"><strong>ARS hoy</strong><span>{formatMoney(arsTotal)}</span><small>{bestYield ? `Mejor TNA actual: ${bestYield.label} · ${bestYield.tna}%` : 'Sin datos de rendimiento'}</small>{closestCard && <small>Próximo vencimiento: {closestCard.name} · {formatDate(closestCard.nextDueDate)}</small>}</div><div className="subscription-card"><span className="eyebrow">Suscripción</span><h3>pesito.ar Pro</h3><p>$6.000 por mes para usar la app con seguimiento completo.</p><button className="submit-btn full-btn" onClick={startSubscription}>{subStatus === 'loading' ? 'Generando link…' : 'Suscribirme'}</button>{subStatus === 'error' && <small className="error-text">No pude generar el link de pago. Revisá el backend/API key.</small>}<button className="logout-btn" onClick={async () => { if (supabase) await supabase.auth.signOut(); setAuth(null); }}>Cerrar sesión</button></div></aside><div className="main-area"><header className="page-topbar"><div><span className="eyebrow">Resumen en vivo</span><h2>{activeTab === 'dashboard' ? 'Tu centro de control financiero' : activeTab === 'accounts' ? 'Cuentas y billeteras' : activeTab === 'transactions' ? 'Movimientos' : activeTab === 'debts' ? 'Deudas' : activeTab === 'installments' ? 'Cuotas' : activeTab === 'cards' ? 'Tarjetas de crédito' : 'Presupuestos y rendimientos'}</h2></div><div className="quick-actions"><button className="ghost" onClick={() => openCreate('account')}><Plus size={16} /> Cuenta</button><button className="ghost" onClick={() => openCreate('transaction')}><Plus size={16} /> Movimiento</button><button className="ghost" onClick={() => openCreate('debt')}><Plus size={16} /> Deuda</button><button className="ghost" onClick={() => openCreate('installment')}><Plus size={16} /> Cuota</button><button className="ghost" onClick={() => openCreate('card')}><Plus size={16} /> Tarjeta</button></div></header>
 
-      <div className="main-area">
-        <header className="page-topbar">
-          <div>
-            <span className="eyebrow">Resumen en vivo</span>
-            <h2>{activeTab === 'dashboard' ? 'Tu centro de control financiero' : activeTab === 'accounts' ? 'Cuentas y billeteras' : activeTab === 'transactions' ? 'Movimientos' : activeTab === 'debts' ? 'Deudas' : activeTab === 'installments' ? 'Cuotas' : 'Tarjetas de crédito'}</h2>
-          </div>
-          <div className="quick-actions">
-            <button className="ghost" onClick={() => setShowAccountForm(true)}><Plus size={16} /> Cuenta</button>
-            <button className="ghost" onClick={() => setShowTxForm(true)}><Plus size={16} /> Movimiento</button>
-            <button className="ghost" onClick={() => setShowDebtForm(true)}><Plus size={16} /> Deuda</button>
-            <button className="ghost" onClick={() => setShowInstForm(true)}><Plus size={16} /> Cuota</button>
-            <button className="ghost" onClick={() => setShowCardForm(true)}><Plus size={16} /> Tarjeta</button>
-          </div>
-        </header>
+  {activeTab === 'dashboard' && <><section className="hero-summary"><MetricCard title="Saldo total ARS" value={formatMoney(arsTotal)} icon={Wallet} tone="blue" detail={`USD disponibles: ${formatMoney(usdTotal, 'USD')}`} /><MetricCard title="Ingresos del mes" value={formatMoney(incomeMonth)} icon={ArrowUpRight} tone="green" detail="Plata que entró este mes" /><MetricCard title="Gastos del mes" value={formatMoney(expenseMonth)} icon={ArrowDownLeft} tone="red" detail={`Compromisos por cuotas: ${formatMoney(monthlyInstallments)}`} /><MetricCard title="Tarjeta próximo resumen" value={formatMoney(nextCardDue)} icon={CreditCard} tone="violet" detail={closestCard ? `${closestCard.name} vence ${formatDate(closestCard.nextDueDate)}` : `Disponible estimado: ${formatMoney(totalCardAvailable)} / ${formatMoney(totalCardLimit)}`} /></section><section className="recommendation-grid"><article className="recommendation-card yield-card"><div className="card-head"><div><span className="eyebrow">Rendimiento ARS</span><h3>¿Dónde conviene tener tu plata?</h3></div><button className="refresh-btn" onClick={refreshYields}>{yieldStatus === 'loading' ? 'Actualizando…' : 'Actualizar'}</button></div>{recommendation ? <><div className="yield-main"><div><span className="eyebrow muted">Mejor opción hoy</span><strong>{recommendation.bestYield.label}</strong><p>{recommendation.bestYield.tna}% TNA</p></div><div className="yield-pill">Actualizado {new Date(data.yields.updatedAt).toLocaleDateString('es-AR')}</div></div><div className="yield-text"><p>Tenés más saldo en <strong>{recommendation.highestBalanceAccount.name}</strong>. Si movieras ese monto a <strong>{recommendation.bestYield.label}</strong>, la mejora estimada sería de <strong>{formatMoney(recommendation.monthlyGain)}</strong> por mes con la diferencia actual de tasas.</p></div><div className="yield-table">{currentYieldAccounts.map((acc) => <div key={acc.id} className="yield-row"><span>{acc.name}</span><strong>{acc.tna}%</strong></div>)}</div></> : <p>Agregá cuentas ARS y rendimientos para recibir una sugerencia.</p>}</article><article className="recommendation-card next-card"><span className="eyebrow">Lo próximo</span><h3>Compromisos cercanos</h3><div className="stack-list">{closestCard && <div className="stack-item"><div><strong>{closestCard.name}</strong><small>Resumen estimado · vence {formatDate(closestCard.nextDueDate)} · en {daysUntil(closestCard.nextDueDate)} días</small></div><span>{formatMoney(closestCard.nextStatementAmount)}</span></div>}{budgetsView.slice(0, 2).map((budget) => <div className="stack-item" key={budget.id}><div><strong>{budget.category}</strong><small>{budget.spent > budget.amount ? 'Te pasaste' : 'Te queda margen'}</small></div><span>{formatMoney(budget.remaining)}</span></div>)}{data.debts.slice(0, 2).map((debt) => <div className="stack-item" key={debt.id}><div><strong>{debt.person}</strong><small>{debt.kind === 'owed' ? 'Le debés' : 'Te debe'}</small></div><span>{formatMoney(debt.remaining)}</span></div>)}</div></article></section><section className="charts-grid"><ChartCard title="Gastos por categoría"><ResponsiveContainer width="100%" height={300}><PieChart><Pie data={categoryData} dataKey="value" nameKey="name" innerRadius={68} outerRadius={110} paddingAngle={3}>{categoryData.map((entry, index) => <Cell key={entry.name} fill={palette[index % palette.length]} />)}</Pie><Tooltip formatter={(v) => formatMoney(v)} /></PieChart></ResponsiveContainer></ChartCard><ChartCard title="Ingresos vs egresos"><ResponsiveContainer width="100%" height={300}><BarChart data={monthlyBars}><CartesianGrid strokeDasharray="3 3" stroke="#d8def7" /><XAxis dataKey="month" /><YAxis hide /><Tooltip formatter={(v) => formatMoney(v)} /><Bar dataKey="ingresos" fill="#3e6bff" radius={[8, 8, 0, 0]} /><Bar dataKey="gastos" fill="#c8d5ff" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></ChartCard><ChartCard title="Plata por cuenta (ARS)"><ResponsiveContainer width="100%" height={300}><PieChart><Pie data={accountsPie} dataKey="value" nameKey="name" outerRadius={110}>{accountsPie.map((entry, index) => <Cell key={entry.name} fill={palette[index % palette.length]} />)}</Pie><Tooltip formatter={(v) => formatMoney(v)} /></PieChart></ResponsiveContainer></ChartCard><ChartCard title="Evolución de caja del mes"><ResponsiveContainer width="100%" height={300}><AreaChart data={timeline}><CartesianGrid strokeDasharray="3 3" stroke="#d8def7" /><XAxis dataKey="date" /><YAxis hide /><Tooltip formatter={(v) => formatMoney(v)} /><Area type="monotone" dataKey="saldo" stroke="#3e6bff" fill="#cfd8ff" strokeWidth={3} /></AreaChart></ResponsiveContainer></ChartCard></section></>}
 
-        {activeTab === 'dashboard' && <>
-          <section className="hero-summary">
-            <MetricCard title="Saldo total ARS" value={formatMoney(arsTotal)} icon={Wallet} tone="blue" detail={`USD disponibles: ${formatMoney(usdTotal, 'USD')}`} />
-            <MetricCard title="Ingresos del mes" value={formatMoney(incomeMonth)} icon={ArrowUpRight} tone="green" detail="Plata que entró este mes" />
-            <MetricCard title="Gastos del mes" value={formatMoney(expenseMonth)} icon={ArrowDownLeft} tone="red" detail={`Compromisos por cuotas: ${formatMoney(monthlyInstallments)}`} />
-            <MetricCard title="Tarjeta próximo resumen" value={formatMoney(nextCardDue)} icon={CreditCard} tone="violet" detail={closestCard ? `${closestCard.name} vence ${formatDate(closestCard.nextDueDate)}` : `Disponible estimado: ${formatMoney(totalCardAvailable)} / ${formatMoney(totalCardLimit)}`} />
-          </section>
+  {activeTab === 'accounts' && <section className="table-shell"><div className="table-header"><h3>Tus cuentas y billeteras</h3><button className="ghost" onClick={() => openCreate('account')}><Plus size={16} /> Agregar cuenta</button></div><div className="account-grid">{data.accounts.map((acc) => { const Icon = accountIcons[acc.type] || Wallet; const rate = data.yields.rates.find((r) => r.provider === acc.provider); return <article key={acc.id} className="account-card"><div className="row-actions"><div className="account-head"><div className="icon-wrap"><Icon size={18} /></div><div><strong>{acc.name}</strong><small>{acc.currency} · {acc.type}</small></div></div><ItemActions onEdit={() => openEdit('account', acc)} onDelete={() => deleteAccount(acc)} /></div><div className="account-balance">{formatMoney(acc.balance, acc.currency)}</div><div className="account-foot">{rate ? `${rate.tna}% TNA estimada` : 'Sin rendimiento asociado'}</div></article>; })}</div></section>}
 
-          <section className="recommendation-grid">
-            <article className="recommendation-card yield-card">
-              <div className="card-head">
-                <div>
-                  <span className="eyebrow">Rendimiento ARS</span>
-                  <h3>¿Dónde conviene tener tu plata?</h3>
-                </div>
-                <button className="refresh-btn" onClick={refreshYields}>{yieldStatus === 'loading' ? 'Actualizando…' : 'Actualizar'}</button>
-              </div>
-              {recommendation ? <>
-                <div className="yield-main">
-                  <div>
-                    <span className="eyebrow muted">Mejor opción hoy</span>
-                    <strong>{recommendation.bestYield.label}</strong>
-                    <p>{recommendation.bestYield.tna}% TNA</p>
-                  </div>
-                  <div className="yield-pill">Fuente base: rendimientos AR</div>
-                </div>
-                <div className="yield-text">
-                  <p>Tenés más saldo en <strong>{recommendation.highestBalanceAccount.name}</strong>. Si movieras ese monto a <strong>{recommendation.bestYield.label}</strong>, la mejora estimada sería de <strong>{formatMoney(recommendation.monthlyGain)}</strong> por mes con la diferencia actual de tasas.</p>
-                </div>
-                <div className="yield-table">
-                  {currentYieldAccounts.map((acc) => <div key={acc.id} className="yield-row"><span>{acc.name}</span><strong>{acc.tna}%</strong></div>)}
-                </div>
-              </> : <p>Agregá cuentas ARS y rendimientos para recibir una sugerencia.</p>}
-            </article>
+  {activeTab === 'transactions' && <section className="table-shell"><div className="table-header"><h3>Movimientos recientes</h3><button className="ghost" onClick={() => openCreate('transaction')}><Plus size={16} /> Cargar movimiento</button></div><div className="tx-list">{data.transactions.slice().sort((a, b) => b.date.localeCompare(a.date)).map((tx) => { const account = data.accounts.find((a) => a.id === tx.accountId); return <div className="tx-row" key={tx.id}><div><strong>{tx.note || tx.category}</strong><small>{tx.category} · {account?.name} · {tx.date}</small></div><div className="row-inline"><span className={tx.kind === 'income' ? 'income' : 'expense'}>{tx.kind === 'income' ? '+' : '-'} {formatMoney(tx.amount, tx.currency)}</span><ItemActions onEdit={() => openEdit('transaction', tx)} onDelete={() => deleteTransaction(tx)} compact /></div></div>; })}</div></section>}
 
-            <article className="recommendation-card next-card">
-              <span className="eyebrow">Lo próximo</span>
-              <h3>Compromisos cercanos</h3>
-              <div className="stack-list">
-                {closestCard && <div className="stack-item"><div><strong>{closestCard.name}</strong><small>Resumen estimado · vence {formatDate(closestCard.nextDueDate)}</small></div><span>{formatMoney(closestCard.nextStatementAmount)}</span></div>}
-                {data.debts.slice(0, 2).map((debt) => <div className="stack-item" key={debt.id}><div><strong>{debt.person}</strong><small>{debt.kind === 'owed' ? 'Le debés' : 'Te debe'}</small></div><span>{formatMoney(debt.remaining)}</span></div>)}
-                {data.installments.slice(0, 2).map((inst) => <div className="stack-item" key={inst.id}><div><strong>{inst.title}</strong><small>{inst.paidCount}/{inst.installments} pagas</small></div><span>{formatMoney(inst.installmentAmount)}</span></div>)}
-              </div>
-            </article>
-          </section>
+  {activeTab === 'debts' && <section className="table-shell split-shell"><div><div className="table-header"><h3>Deudas y préstamos</h3><button className="ghost" onClick={() => openCreate('debt')}><Plus size={16} /> Agregar deuda</button></div><div className="tx-list">{data.debts.map((debt) => <div className="tx-row" key={debt.id}><div><strong>{debt.person}</strong><small>{debt.kind === 'owed' ? 'Le debés' : 'Te debe'} · vence {debt.dueDate}</small></div><div className="row-inline"><span>{formatMoney(debt.remaining, debt.currency)}</span><ItemActions onEdit={() => openEdit('debt', debt)} onDelete={() => deleteDebt(debt)} compact /></div></div>)}</div></div><div className="debt-summary"><MetricMini title="Debés" value={formatMoney(debtOut)} /><MetricMini title="Te deben" value={formatMoney(debtIn)} /><MetricMini title="Balance" value={formatMoney(debtIn - debtOut)} /></div></section>}
 
-          <section className="charts-grid">
-            <ChartCard title="Gastos por categoría"><ResponsiveContainer width="100%" height={300}><PieChart><Pie data={categoryData} dataKey="value" nameKey="name" innerRadius={68} outerRadius={110} paddingAngle={3}>{categoryData.map((entry, index) => <Cell key={entry.name} fill={palette[index % palette.length]} />)}</Pie><Tooltip formatter={(v) => formatMoney(v)} /></PieChart></ResponsiveContainer></ChartCard>
-            <ChartCard title="Ingresos vs egresos"><ResponsiveContainer width="100%" height={300}><BarChart data={monthlyBars}><CartesianGrid strokeDasharray="3 3" stroke="#d8def7" /><XAxis dataKey="month" /><YAxis hide /><Tooltip formatter={(v) => formatMoney(v)} /><Bar dataKey="ingresos" fill="#3e6bff" radius={[8, 8, 0, 0]} /><Bar dataKey="gastos" fill="#c8d5ff" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer></ChartCard>
-            <ChartCard title="Plata por cuenta (ARS)"><ResponsiveContainer width="100%" height={300}><PieChart><Pie data={accountsPie} dataKey="value" nameKey="name" outerRadius={110}>{accountsPie.map((entry, index) => <Cell key={entry.name} fill={palette[index % palette.length]} />)}</Pie><Tooltip formatter={(v) => formatMoney(v)} /></PieChart></ResponsiveContainer></ChartCard>
-            <ChartCard title="Evolución de caja del mes"><ResponsiveContainer width="100%" height={300}><AreaChart data={timeline}><CartesianGrid strokeDasharray="3 3" stroke="#d8def7" /><XAxis dataKey="date" /><YAxis hide /><Tooltip formatter={(v) => formatMoney(v)} /><Area type="monotone" dataKey="saldo" stroke="#3e6bff" fill="#cfd8ff" strokeWidth={3} /></AreaChart></ResponsiveContainer></ChartCard>
-          </section>
-        </>}
+  {activeTab === 'installments' && <section className="table-shell"><div className="table-header"><h3>Compras en cuotas</h3><button className="ghost" onClick={() => openCreate('installment')}><Plus size={16} /> Agregar plan</button></div><div className="installment-grid">{data.installments.map((inst) => <article key={inst.id} className="installment-card"><div className="row-actions"><div><strong>{inst.title}</strong><small>{inst.category}</small></div><ItemActions onEdit={() => openEdit('installment', inst)} onDelete={() => deleteInstallment(inst)} /></div><div className="progress-line"><span style={{ width: `${(inst.paidCount / inst.installments) * 100}%` }} /></div><div className="installment-meta"><span>{inst.paidCount}/{inst.installments} pagas</span><span>{formatMoney(inst.installmentAmount)}</span></div></article>)}</div></section>}
 
-        {activeTab === 'accounts' && <section className="table-shell"><div className="table-header"><h3>Tus cuentas y billeteras</h3><button className="ghost" onClick={() => setShowAccountForm(true)}><Plus size={16} /> Agregar cuenta</button></div><div className="account-grid">{data.accounts.map((acc) => { const Icon = accountIcons[acc.type] || Wallet; const rate = data.yields.rates.find((r) => r.provider === acc.provider); return <article key={acc.id} className="account-card"><div className="account-head"><div className="icon-wrap"><Icon size={18} /></div><div><strong>{acc.name}</strong><small>{acc.currency} · {acc.type}</small></div></div><div className="account-balance">{formatMoney(acc.balance, acc.currency)}</div><div className="account-foot">{rate ? `${rate.tna}% TNA estimada` : 'Sin rendimiento asociado'}</div></article>; })}</div></section>}
+  {activeTab === 'cards' && <section className="table-shell split-shell cards-shell"><div><div className="table-header"><h3>Tarjetas de crédito</h3><div className="quick-actions"><button className="ghost" onClick={() => openCreate('card')}><Plus size={16} /> Nueva tarjeta</button><button className="ghost" onClick={() => openCreate('cardPurchase')}><Plus size={16} /> Compra con tarjeta</button></div></div><div className="account-grid cards-grid">{cardsSummary.map((card) => <article key={card.id} className="account-card credit-card-block"><div className="row-actions"><div className="account-head"><div className="icon-wrap"><CreditCard size={18} /></div><div><strong>{card.name}</strong><small>{card.bank}</small></div></div><ItemActions onEdit={() => openEdit('card', card)} onDelete={() => deleteCreditCard(card)} /></div><div className="account-balance">{formatMoney(card.available)}</div><small>Disponible estimado · {card.utilization.toFixed(0)}% usado</small><div className="card-dates"><span>Próximo cierre <strong>{formatDate(card.nextClosingDate)}</strong> · en {daysUntil(card.nextClosingDate)} días</span><span>Próximo vencimiento <strong>{formatDate(card.nextDueDate)}</strong> · en {daysUntil(card.nextDueDate)} días</span></div><div className="card-summary-grid"><div><small>Resumen a vencer</small><strong>{formatMoney(card.nextStatementAmount)}</strong></div><div><small>Ciclo siguiente</small><strong>{formatMoney(card.followingStatementAmount)}</strong></div></div><div className="installment-meta card-meta-row"><span>Límite {formatMoney(card.limit)}</span><span>{card.purchases.length} compras cargadas</span></div>{card.urgentPurchases.length > 0 && <div className="sublist">{card.urgentPurchases.slice(0, 3).map((purchase) => <div key={purchase.id} className="sublist-row"><span>{purchase.title}</span><strong>{formatMoney(purchase.installmentAmount)}</strong></div>)}</div>}</article>)}</div></div><div className="table-shell card-purchases-panel"><div className="table-header"><h3>Compras con tarjeta</h3><button className="ghost" onClick={() => openCreate('cardPurchase')}><Plus size={16} /> Cargar compra</button></div><div className="mini-card card-summary-highlight"><span>Total estimado próximo vencimiento</span><strong>{formatMoney(nextCardDue)}</strong>{closestCard && <small>{closestCard.name} vence {formatDate(closestCard.nextDueDate)}</small>}</div><div className="tx-list">{data.cardPurchases.slice().sort((a, b) => (a.nextDueMonth || '').localeCompare(b.nextDueMonth || '')).map((purchase) => { const card = data.creditCards.find((c) => c.id === purchase.cardId); return <div className="tx-row" key={purchase.id}><div><strong>{purchase.title}</strong><small>{card?.name} · {purchase.category} · cuota {purchase.currentInstallment}/{purchase.installments} · vence {purchase.nextDueMonth}</small></div><div className="row-inline"><span>{formatMoney(purchase.installmentAmount)}</span><ItemActions onEdit={() => openEdit('cardPurchase', purchase)} onDelete={() => deleteCardPurchase(purchase)} compact /></div></div>; })}</div></div></section>}
 
-        {activeTab === 'transactions' && <section className="table-shell"><div className="table-header"><h3>Movimientos recientes</h3><button className="ghost" onClick={() => setShowTxForm(true)}><Plus size={16} /> Cargar movimiento</button></div><div className="tx-list">{data.transactions.slice().sort((a, b) => b.date.localeCompare(a.date)).map((tx) => { const account = data.accounts.find((a) => a.id === tx.accountId); return <div className="tx-row" key={tx.id}><div><strong>{tx.note || tx.category}</strong><small>{tx.category} · {account?.name} · {tx.date}</small></div><span className={tx.kind === 'income' ? 'income' : 'expense'}>{tx.kind === 'income' ? '+' : '-'} {formatMoney(tx.amount, tx.currency)}</span></div>; })}</div></section>}
+  {activeTab === 'planning' && <section className="planning-grid"><article className="table-shell"><div className="table-header"><h3>Presupuestos del mes</h3><button className="ghost" onClick={() => openCreate('budget')}><Plus size={16} /> Presupuesto</button></div><div className="tx-list">{budgetsView.map((budget) => <div className="budget-row" key={budget.id}><div className="budget-head"><div><strong>{budget.category}</strong><small>{formatMoney(budget.spent)} de {formatMoney(budget.amount)}</small></div><ItemActions onEdit={() => openEdit('budget', budget)} onDelete={() => deleteBudget(budget)} compact /></div><div className="progress-line thin"><span style={{ width: `${Math.min(100, budget.pct)}%` }} /></div><div className="installment-meta"><span>{budget.pct > 100 ? 'Excedido' : 'Restante'}</span><span className={budget.remaining < 0 ? 'expense' : ''}>{formatMoney(budget.remaining)}</span></div></div>)}</div></article><article className="table-shell"><div className="table-header"><h3>Rendimientos ARS</h3><div className="quick-actions"><button className="ghost" onClick={() => openCreate('yield')}><Plus size={16} /> Rendimiento</button><button className="refresh-btn" onClick={refreshYields}>{yieldStatus === 'loading' ? 'Actualizando…' : 'Reset base'}</button></div></div><div className="yield-table">{data.yields.rates.slice().sort((a, b) => b.tna - a.tna).map((rate) => <div key={rate.id} className="yield-row"><div><strong>{rate.label}</strong><small>{rate.provider}</small></div><div className="row-inline"><strong>{rate.tna}%</strong><ItemActions onEdit={() => openEdit('yield', rate)} onDelete={() => deleteYield(rate)} compact /></div></div>)}</div><div className="mini-card planning-note"><span>Última actualización</span><strong>{new Date(data.yields.updatedAt).toLocaleString('es-AR')}</strong></div></article></section>}
+</div>
 
-        {activeTab === 'debts' && <section className="table-shell split-shell"><div><div className="table-header"><h3>Deudas y préstamos</h3><button className="ghost" onClick={() => setShowDebtForm(true)}><Plus size={16} /> Agregar deuda</button></div><div className="tx-list">{data.debts.map((debt) => <div className="tx-row" key={debt.id}><div><strong>{debt.person}</strong><small>{debt.kind === 'owed' ? 'Le debés' : 'Te debe'} · vence {debt.dueDate}</small></div><span>{formatMoney(debt.remaining, debt.currency)}</span></div>)}</div></div><div className="debt-summary"><MetricMini title="Debés" value={formatMoney(debtOut)} /><MetricMini title="Te deben" value={formatMoney(debtIn)} /><MetricMini title="Balance" value={formatMoney(debtIn - debtOut)} /></div></section>}
-
-        {activeTab === 'installments' && <section className="table-shell"><div className="table-header"><h3>Compras en cuotas</h3><button className="ghost" onClick={() => setShowInstForm(true)}><Plus size={16} /> Agregar plan</button></div><div className="installment-grid">{data.installments.map((inst) => <article key={inst.id} className="installment-card"><strong>{inst.title}</strong><small>{inst.category}</small><div className="progress-line"><span style={{ width: `${(inst.paidCount / inst.installments) * 100}%` }} /></div><div className="installment-meta"><span>{inst.paidCount}/{inst.installments} pagas</span><span>{formatMoney(inst.installmentAmount)}</span></div></article>)}</div></section>}
-
-        {activeTab === 'cards' && <section className="table-shell split-shell cards-shell"><div><div className="table-header"><h3>Tarjetas de crédito</h3><div className="quick-actions"><button className="ghost" onClick={() => setShowCardForm(true)}><Plus size={16} /> Nueva tarjeta</button><button className="ghost" onClick={() => setShowCardPurchaseForm(true)}><Plus size={16} /> Compra con tarjeta</button></div></div><div className="account-grid cards-grid">{cardsSummary.map((card) => <article key={card.id} className="account-card credit-card-block"><div className="account-head"><div className="icon-wrap"><CreditCard size={18} /></div><div><strong>{card.name}</strong><small>{card.bank}</small></div></div><div className="account-balance">{formatMoney(card.available)}</div><small>Disponible estimado · {card.utilization.toFixed(0)}% usado</small><div className="card-dates"><span>Próximo cierre <strong>{formatDate(card.nextClosingDate)}</strong></span><span>Próximo vencimiento <strong>{formatDate(card.nextDueDate)}</strong></span></div><div className="card-summary-grid"><div><small>Resumen próximo</small><strong>{formatMoney(card.nextStatementAmount)}</strong></div><div><small>Comprometido total</small><strong>{formatMoney(card.totalCommitted)}</strong></div></div><div className="installment-meta card-meta-row"><span>Límite {formatMoney(card.limit)}</span><span>{card.purchases.length} compras cargadas</span></div></article>)}</div></div><div className="table-shell card-purchases-panel"><div className="table-header"><h3>Próximo resumen</h3></div><div className="mini-card card-summary-highlight"><span>Total estimado próximo vencimiento</span><strong>{formatMoney(nextCardDue)}</strong>{closestCard && <small>{closestCard.name} vence {formatDate(closestCard.nextDueDate)}</small>}</div><div className="tx-list">{data.cardPurchases.map((purchase) => { const card = data.creditCards.find((c) => c.id === purchase.cardId); return <div className="tx-row" key={purchase.id}><div><strong>{purchase.title}</strong><small>{card?.name} · {purchase.category} · {purchase.currentInstallment}/{purchase.installments}</small></div><span>{formatMoney(purchase.installmentAmount)}</span></div>; })}</div></div></section>}
-      </div>
-
-      {showAccountForm && <Modal title="Nueva cuenta" onClose={() => setShowAccountForm(false)}><AccountForm onSubmit={addAccount} /></Modal>}
-      {showTxForm && <Modal title="Nuevo movimiento" onClose={() => setShowTxForm(false)}><TransactionForm accounts={data.accounts} onSubmit={addTransaction} /></Modal>}
-      {showDebtForm && <Modal title="Nueva deuda" onClose={() => setShowDebtForm(false)}><DebtForm onSubmit={addDebt} /></Modal>}
-      {showInstForm && <Modal title="Nuevo plan en cuotas" onClose={() => setShowInstForm(false)}><InstallmentForm accounts={data.accounts} onSubmit={addInstallment} /></Modal>}
-      {showCardForm && <Modal title="Nueva tarjeta de crédito" onClose={() => setShowCardForm(false)}><CreditCardForm onSubmit={addCreditCard} /></Modal>}
-      {showCardPurchaseForm && <Modal title="Nueva compra con tarjeta" onClose={() => setShowCardPurchaseForm(false)}><CardPurchaseForm cards={data.creditCards} onSubmit={addCardPurchase} /></Modal>}
-    </div>
-  );
+  {modal?.type === 'account' && <Modal title={modal.mode === 'edit' ? 'Editar cuenta' : 'Nueva cuenta'} onClose={closeModal}><AccountForm initialData={modal.item} onSubmit={(form) => saveAccount(form, modal.item)} /></Modal>}
+  {modal?.type === 'transaction' && <Modal title={modal.mode === 'edit' ? 'Editar movimiento' : 'Nuevo movimiento'} onClose={closeModal}><TransactionForm accounts={data.accounts} initialData={modal.item} onSubmit={(form) => saveTransaction(form, modal.item)} /></Modal>}
+  {modal?.type === 'debt' && <Modal title={modal.mode === 'edit' ? 'Editar deuda' : 'Nueva deuda'} onClose={closeModal}><DebtForm initialData={modal.item} onSubmit={(form) => saveDebt(form, modal.item)} /></Modal>}
+  {modal?.type === 'installment' && <Modal title={modal.mode === 'edit' ? 'Editar plan en cuotas' : 'Nuevo plan en cuotas'} onClose={closeModal}><InstallmentForm accounts={data.accounts} initialData={modal.item} onSubmit={(form) => saveInstallment(form, modal.item)} /></Modal>}
+  {modal?.type === 'card' && <Modal title={modal.mode === 'edit' ? 'Editar tarjeta de crédito' : 'Nueva tarjeta de crédito'} onClose={closeModal}><CreditCardForm initialData={modal.item} onSubmit={(form) => saveCreditCard(form, modal.item)} /></Modal>}
+  {modal?.type === 'cardPurchase' && <Modal title={modal.mode === 'edit' ? 'Editar compra con tarjeta' : 'Nueva compra con tarjeta'} onClose={closeModal}><CardPurchaseForm cards={data.creditCards} initialData={modal.item} onSubmit={(form) => saveCardPurchase(form, modal.item)} /></Modal>}
+  {modal?.type === 'budget' && <Modal title={modal.mode === 'edit' ? 'Editar presupuesto' : 'Nuevo presupuesto'} onClose={closeModal}><BudgetForm initialData={modal.item} onSubmit={(form) => saveBudget(form, modal.item)} /></Modal>}
+  {modal?.type === 'yield' && <Modal title={modal.mode === 'edit' ? 'Editar rendimiento' : 'Nuevo rendimiento'} onClose={closeModal}><YieldForm initialData={modal.item} onSubmit={(form) => saveYield(form, modal.item)} /></Modal>}
+</div>;
 }
 
 function MetricCard({ title, value, icon: Icon, tone, detail }) { return <article className={`metric-card ${tone}`}><div className="metric-head"><span>{title}</span><Icon size={18} /></div><strong>{value}</strong><small>{detail}</small></article>; }
 function MetricMini({ title, value }) { return <article className="mini-card"><span>{title}</span><strong>{value}</strong></article>; }
 function ChartCard({ title, children }) { return <article className="chart-card"><div className="card-head simple"><h3>{title}</h3></div>{children}</article>; }
 function Modal({ title, onClose, children }) { return <div className="modal-backdrop" onClick={onClose}><div className="modal-shell" onClick={(e) => e.stopPropagation()}><div className="modal-top"><h3>{title}</h3><button onClick={onClose}>✕</button></div>{children}</div></div>; }
-function Field({ label, ...props }) { return <label className="field"><span>{label}</span><input {...props} /></label>; }
+function Field({ label, as = 'input', children, ...props }) { const Tag = as; return <label className="field"><span>{label}</span>{children || <Tag {...props} />}</label>; }
 function SelectField({ label, options, ...props }) { return <label className="field"><span>{label}</span><select {...props}>{options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>; }
-function AccountForm({ onSubmit }) { const [form, setForm] = useState({ name: '', type: 'wallet', currency: 'ARS', balance: '', provider: '' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /><SelectField label="Tipo" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} options={[['wallet','Billetera'],['bank','Banco'],['cash','Efectivo'],['savings','Ahorro']].map(([value,label])=>({value,label}))} /><SelectField label="Moneda" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} options={[{ value: 'ARS', label: 'ARS' }, { value: 'USD', label: 'USD' }]} /><Field label="Saldo actual" type="number" value={form.balance} onChange={(e) => setForm({ ...form, balance: e.target.value })} required /><Field label="Provider (opcional)" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /><button className="submit-btn">Guardar cuenta</button></form>; }
-function TransactionForm({ accounts, onSubmit }) { const [form, setForm] = useState({ kind: 'expense', amount: '', currency: 'ARS', accountId: accounts[0]?.id || '', category: 'Comida', note: '', date: today() }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><SelectField label="Tipo" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} options={[{ value: 'income', label: 'Ingreso' }, { value: 'expense', label: 'Gasto' }]} /><Field label="Monto" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required /><SelectField label="Cuenta" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} options={accounts.map((a) => ({ value: a.id, label: a.name }))} /><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><Field label="Nota" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /><Field label="Fecha" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required /><button className="submit-btn">Guardar movimiento</button></form>; }
-function DebtForm({ onSubmit }) { const [form, setForm] = useState({ kind: 'owed', person: '', total: '', currency: 'ARS', dueDate: future(7), note: '' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><SelectField label="Tipo" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} options={[{ value: 'owed', label: 'Yo debo' }, { value: 'receivable', label: 'Me deben' }]} /><Field label="Persona" value={form.person} onChange={(e) => setForm({ ...form, person: e.target.value })} required /><Field label="Monto" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required /><Field label="Fecha de vencimiento" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /><Field label="Nota" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /><button className="submit-btn">Guardar deuda</button></form>; }
-function InstallmentForm({ accounts, onSubmit }) { const [form, setForm] = useState({ title: '', total: '', installments: 3, paidCount: 0, currency: 'ARS', accountId: accounts[0]?.id || '', category: 'Compras' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Compra" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /><Field label="Monto total" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required /><Field label="Cantidad de cuotas" type="number" value={form.installments} onChange={(e) => setForm({ ...form, installments: e.target.value })} required /><Field label="Cuotas ya pagas" type="number" value={form.paidCount} onChange={(e) => setForm({ ...form, paidCount: e.target.value })} required /><SelectField label="Cuenta" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} options={accounts.map((a) => ({ value: a.id, label: a.name }))} /><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><button className="submit-btn">Guardar plan</button></form>; }
-function CreditCardForm({ onSubmit }) { const [form, setForm] = useState({ name: '', bank: '', closingDay: 25, dueDay: 3, limit: '', available: '', currency: 'ARS' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Nombre de la tarjeta" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /><Field label="Banco / emisor" value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} required /><Field label="Día de cierre" type="number" value={form.closingDay} onChange={(e) => setForm({ ...form, closingDay: e.target.value })} required /><Field label="Día de vencimiento" type="number" value={form.dueDay} onChange={(e) => setForm({ ...form, dueDay: e.target.value })} required /><Field label="Límite" type="number" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} required /><Field label="Disponible actual" type="number" value={form.available} onChange={(e) => setForm({ ...form, available: e.target.value })} required /><button className="submit-btn">Guardar tarjeta</button></form>; }
-function CardPurchaseForm({ cards, onSubmit }) { const [form, setForm] = useState({ cardId: cards?.[0]?.id || '', title: '', total: '', installments: 1, currentInstallment: 1, purchaseDate: today(), nextDueMonth: future(10), category: 'Consumo' }); if (!cards?.length) return <div className="mini-card"><span>Primero cargá una tarjeta para registrar compras.</span></div>; return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><SelectField label="Tarjeta" value={form.cardId} onChange={(e) => setForm({ ...form, cardId: e.target.value })} options={cards.map((c) => ({ value: c.id, label: c.name }))} /><Field label="Compra" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /><Field label="Monto total" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required /><Field label="Cantidad de cuotas" type="number" value={form.installments} onChange={(e) => setForm({ ...form, installments: e.target.value })} required /><Field label="Cuota actual" type="number" value={form.currentInstallment} onChange={(e) => setForm({ ...form, currentInstallment: e.target.value })} required /><Field label="Fecha de compra" type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })} required /><Field label="Próximo vencimiento estimado" type="date" value={form.nextDueMonth} onChange={(e) => setForm({ ...form, nextDueMonth: e.target.value })} required /><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><button className="submit-btn">Guardar compra</button></form>; }
+function ItemActions({ onEdit, onDelete, compact = false }) { return <div className={`item-actions ${compact ? 'compact' : ''}`}><button type="button" className="icon-btn" onClick={onEdit} aria-label="Editar"><Pencil size={14} /></button><button type="button" className="icon-btn danger" onClick={onDelete} aria-label="Borrar"><Trash2 size={14} /></button></div>; }
+
+function AccountForm({ onSubmit, initialData }) { const [form, setForm] = useState({ name: initialData?.name || '', type: initialData?.type || 'wallet', currency: initialData?.currency || 'ARS', balance: initialData?.balance ?? '', provider: initialData?.provider || '' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /><SelectField label="Tipo" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} options={[['wallet', 'Billetera'], ['bank', 'Banco'], ['cash', 'Efectivo'], ['savings', 'Ahorro']].map(([value, label]) => ({ value, label }))} /><SelectField label="Moneda" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} options={[{ value: 'ARS', label: 'ARS' }, { value: 'USD', label: 'USD' }]} /><Field label="Saldo actual" type="number" value={form.balance} onChange={(e) => setForm({ ...form, balance: e.target.value })} required /><Field label="Provider" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /><button className="submit-btn">Guardar cuenta</button></form>; }
+function TransactionForm({ accounts, onSubmit, initialData }) { const [form, setForm] = useState({ kind: initialData?.kind || 'expense', amount: initialData?.amount ?? '', currency: initialData?.currency || 'ARS', accountId: initialData?.accountId || accounts[0]?.id || '', category: initialData?.category || 'Comida', note: initialData?.note || '', date: initialData?.date || today() }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><SelectField label="Tipo" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} options={[{ value: 'income', label: 'Ingreso' }, { value: 'expense', label: 'Gasto' }]} /><Field label="Monto" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required /><SelectField label="Cuenta" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} options={accounts.map((a) => ({ value: a.id, label: a.name }))} /><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><Field label="Nota" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /><Field label="Fecha" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required /><button className="submit-btn">Guardar movimiento</button></form>; }
+function DebtForm({ onSubmit, initialData }) { const [form, setForm] = useState({ kind: initialData?.kind || 'owed', person: initialData?.person || '', total: initialData?.total ?? '', remaining: initialData?.remaining ?? initialData?.total ?? '', currency: initialData?.currency || 'ARS', dueDate: initialData?.dueDate || future(7), note: initialData?.note || '' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><SelectField label="Tipo" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} options={[{ value: 'owed', label: 'Yo debo' }, { value: 'receivable', label: 'Me deben' }]} /><Field label="Persona" value={form.person} onChange={(e) => setForm({ ...form, person: e.target.value })} required /><Field label="Monto total" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required /><Field label="Saldo pendiente" type="number" value={form.remaining} onChange={(e) => setForm({ ...form, remaining: e.target.value })} required /><Field label="Fecha de vencimiento" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /><Field label="Nota" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /><button className="submit-btn">Guardar deuda</button></form>; }
+function InstallmentForm({ accounts, onSubmit, initialData }) { const [form, setForm] = useState({ title: initialData?.title || '', total: initialData?.total ?? '', installments: initialData?.installments || 3, paidCount: initialData?.paidCount || 0, currency: initialData?.currency || 'ARS', accountId: initialData?.accountId || accounts[0]?.id || '', category: initialData?.category || 'Compras' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Compra" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /><Field label="Monto total" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required /><Field label="Cantidad de cuotas" type="number" value={form.installments} onChange={(e) => setForm({ ...form, installments: e.target.value })} required /><Field label="Cuotas ya pagas" type="number" value={form.paidCount} onChange={(e) => setForm({ ...form, paidCount: e.target.value })} required /><SelectField label="Cuenta" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} options={accounts.map((a) => ({ value: a.id, label: a.name }))} /><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><button className="submit-btn">Guardar plan</button></form>; }
+function CreditCardForm({ onSubmit, initialData }) { const [form, setForm] = useState({ name: initialData?.name || '', bank: initialData?.bank || '', closingDay: initialData?.closingDay || 25, dueDay: initialData?.dueDay || 3, limit: initialData?.limit ?? '', available: initialData?.available ?? '', currency: initialData?.currency || 'ARS' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Nombre de la tarjeta" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /><Field label="Banco / emisor" value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} required /><Field label="Día de cierre" type="number" value={form.closingDay} onChange={(e) => setForm({ ...form, closingDay: e.target.value })} required /><Field label="Día de vencimiento" type="number" value={form.dueDay} onChange={(e) => setForm({ ...form, dueDay: e.target.value })} required /><Field label="Límite" type="number" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} required /><Field label="Disponible actual" type="number" value={form.available} onChange={(e) => setForm({ ...form, available: e.target.value })} required /><button className="submit-btn">Guardar tarjeta</button></form>; }
+function CardPurchaseForm({ cards, onSubmit, initialData }) { const [form, setForm] = useState({ cardId: initialData?.cardId || cards?.[0]?.id || '', title: initialData?.title || '', total: initialData?.total ?? '', installments: initialData?.installments || 1, currentInstallment: initialData?.currentInstallment || 1, purchaseDate: initialData?.purchaseDate || today(), nextDueMonth: initialData?.nextDueMonth || futureDateString(1), category: initialData?.category || 'Consumo' }); if (!cards?.length) return <div className="mini-card"><span>Primero cargá una tarjeta para registrar compras.</span></div>; return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><SelectField label="Tarjeta" value={form.cardId} onChange={(e) => setForm({ ...form, cardId: e.target.value })} options={cards.map((c) => ({ value: c.id, label: c.name }))} /><Field label="Compra" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /><Field label="Monto total" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required /><Field label="Cantidad de cuotas" type="number" value={form.installments} onChange={(e) => setForm({ ...form, installments: e.target.value })} required /><Field label="Cuota actual" type="number" value={form.currentInstallment} onChange={(e) => setForm({ ...form, currentInstallment: e.target.value })} required /><Field label="Fecha de compra" type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })} required /><Field label="Próximo vencimiento de esa cuota" type="date" value={form.nextDueMonth} onChange={(e) => setForm({ ...form, nextDueMonth: e.target.value })} required /><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><button className="submit-btn">Guardar compra</button></form>; }
+function BudgetForm({ onSubmit, initialData }) { const [form, setForm] = useState({ category: initialData?.category || '', amount: initialData?.amount ?? '' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /><Field label="Monto mensual" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required /><button className="submit-btn">Guardar presupuesto</button></form>; }
+function YieldForm({ onSubmit, initialData }) { const [form, setForm] = useState({ provider: initialData?.provider || '', label: initialData?.label || '', tna: initialData?.tna ?? '' }); return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}><Field label="Provider" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} required /><Field label="Nombre visible" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} required /><Field label="TNA" type="number" step="0.1" value={form.tna} onChange={(e) => setForm({ ...form, tna: e.target.value })} required /><button className="submit-btn">Guardar rendimiento</button></form>; }
 function LandingScreen({ onAuth }) {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
