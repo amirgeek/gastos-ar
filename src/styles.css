@@ -146,6 +146,12 @@ button { cursor: pointer; }
 .pricing-list { margin: 16px 0 0; padding-left: 18px; color: oklch(0.35 0.03 244); display: grid; gap: 8px; }
 .pricing-actions-stack { align-items: flex-start; }
 .pricing-actions small, .hint-text { color: oklch(0.45 0.03 244); max-width: 24ch; }
+.cards-shell { align-items: start; }
+.cards-grid { grid-template-columns: 1fr; }
+.credit-card-block { background: linear-gradient(180deg, rgba(84,120,232,.12), rgba(255,255,255,.82)); }
+.card-meta-row { margin-top: 12px; }
+.card-purchases-panel { padding: 22px; }
+.card-summary-highlight { margin-bottom: 12px; }
 .auth-modal { width: min(560px, 100%); }
 .mobile-sticky-cta { display: none; }
 @media (max-width: 1180px) { .app-shell, .landing-hero, .manifesto-band, .proof-grid { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; } .hero-summary, .recommendation-grid, .charts-grid, .account-grid, .installment-grid, .split-shell, .asym-grid { grid-template-columns: 1fr 1fr; } .offset-grid { transform: none; } .command-center { transform: none; } .landing-topbar { grid-template-columns: auto 1fr auto; } .landing-nav { justify-content: flex-start; } }

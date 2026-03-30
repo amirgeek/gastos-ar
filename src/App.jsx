@@ -54,6 +54,15 @@ const seed = {
     { id: 'inst-1', title: 'Notebook', total: 450000, installments: 6, paidCount: 2, installmentAmount: 75000, currency: 'ARS', accountId: 'acc-3', category: 'Tecnología' },
     { id: 'inst-2', title: 'Air fryer', total: 180000, installments: 3, paidCount: 1, installmentAmount: 60000, currency: 'ARS', accountId: 'acc-3', category: 'Hogar' },
   ],
+  creditCards: [
+    { id: 'card-1', name: 'Visa Santander', bank: 'Santander', closingDay: 25, dueDay: 3, limit: 1200000, available: 860000, currency: 'ARS' },
+    { id: 'card-2', name: 'Mastercard Naranja', bank: 'Naranja X', closingDay: 18, dueDay: 1, limit: 800000, available: 620000, currency: 'ARS' },
+  ],
+  cardPurchases: [
+    { id: 'cp-1', cardId: 'card-1', title: 'Supermercado mensual', total: 98200, installments: 1, currentInstallment: 1, installmentAmount: 98200, purchaseDate: today(-5), nextDueMonth: future(12), category: 'Supermercado' },
+    { id: 'cp-2', cardId: 'card-1', title: 'Pasajes', total: 360000, installments: 6, currentInstallment: 2, installmentAmount: 60000, purchaseDate: today(-25), nextDueMonth: future(12), category: 'Viajes' },
+    { id: 'cp-3', cardId: 'card-2', title: 'Celular', total: 720000, installments: 12, currentInstallment: 3, installmentAmount: 60000, purchaseDate: today(-48), nextDueMonth: future(7), category: 'Tecnología' },
+  ],
   budgets: [
     { id: 'bud-1', category: 'Supermercado', amount: 180000 },
     { id: 'bud-2', category: 'Salidas', amount: 80000 },
@@ -115,6 +124,8 @@ export default function App() {
   const [showTxForm, setShowTxForm] = useState(false);
   const [showDebtForm, setShowDebtForm] = useState(false);
   const [showInstForm, setShowInstForm] = useState(false);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [showCardPurchaseForm, setShowCardPurchaseForm] = useState(false);
   const [yieldStatus, setYieldStatus] = useState('idle');
   const [subStatus, setSubStatus] = useState('idle');
 
@@ -169,6 +180,9 @@ export default function App() {
   const debtOut = data.debts.filter((d) => d.kind === 'owed').reduce((s, d) => s + d.remaining, 0);
   const debtIn = data.debts.filter((d) => d.kind === 'receivable').reduce((s, d) => s + d.remaining, 0);
   const monthlyInstallments = data.installments.reduce((s, i) => s + (i.paidCount < i.installments ? i.installmentAmount : 0), 0);
+  const nextCardDue = data.cardPurchases.reduce((s, p) => s + p.installmentAmount, 0);
+  const totalCardLimit = data.creditCards.reduce((s, c) => s + c.limit, 0);
+  const totalCardAvailable = data.creditCards.reduce((s, c) => s + c.available, 0);
 
   const categoryData = useMemo(() => {
     const map = new Map();
@@ -305,6 +319,44 @@ export default function App() {
     setData((prev) => ({ ...prev, installments: [plan, ...prev.installments] }));
     setShowInstForm(false);
   }
+  function addCreditCard(form) {
+    const card = {
+      id: crypto.randomUUID(),
+      name: form.name,
+      bank: form.bank,
+      closingDay: parseNum(form.closingDay),
+      dueDay: parseNum(form.dueDay),
+      limit: parseNum(form.limit),
+      available: parseNum(form.available),
+      currency: form.currency,
+    };
+    setData((prev) => ({ ...prev, creditCards: [card, ...prev.creditCards] }));
+    setShowCardForm(false);
+  }
+  function addCardPurchase(form) {
+    const total = parseNum(form.total);
+    const installments = Math.max(1, parseNum(form.installments));
+    const purchase = {
+      id: crypto.randomUUID(),
+      cardId: form.cardId,
+      title: form.title,
+      total,
+      installments,
+      currentInstallment: parseNum(form.currentInstallment) || 1,
+      installmentAmount: total / installments,
+      purchaseDate: form.purchaseDate,
+      nextDueMonth: form.nextDueMonth,
+      category: form.category,
+    };
+    setData((prev) => ({
+      ...prev,
+      cardPurchases: [purchase, ...prev.cardPurchases],
+      creditCards: prev.creditCards.map((card) =>
+        card.id === form.cardId ? { ...card, available: Math.max(0, card.available - total) } : card
+      ),
+    }));
+    setShowCardPurchaseForm(false);
+  }
 
   async function startSubscription() {
     try {
@@ -368,6 +420,7 @@ export default function App() {
             ['transactions', 'Movimientos'],
             ['debts', 'Deudas'],
             ['installments', 'Cuotas'],
+            ['cards', 'Tarjetas'],
           ].map(([id, label]) => (
             <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>{label}</button>
           ))}
@@ -393,13 +446,14 @@ export default function App() {
         <header className="page-topbar">
           <div>
             <span className="eyebrow">Resumen en vivo</span>
-            <h2>{activeTab === 'dashboard' ? 'Tu centro de control financiero' : activeTab === 'accounts' ? 'Cuentas y billeteras' : activeTab === 'transactions' ? 'Movimientos' : activeTab === 'debts' ? 'Deudas' : 'Cuotas'}</h2>
+            <h2>{activeTab === 'dashboard' ? 'Tu centro de control financiero' : activeTab === 'accounts' ? 'Cuentas y billeteras' : activeTab === 'transactions' ? 'Movimientos' : activeTab === 'debts' ? 'Deudas' : activeTab === 'installments' ? 'Cuotas' : 'Tarjetas de crédito'}</h2>
           </div>
           <div className="quick-actions">
             <button className="ghost" onClick={() => setShowAccountForm(true)}><Plus size={16} /> Cuenta</button>
             <button className="ghost" onClick={() => setShowTxForm(true)}><Plus size={16} /> Movimiento</button>
             <button className="ghost" onClick={() => setShowDebtForm(true)}><Plus size={16} /> Deuda</button>
             <button className="ghost" onClick={() => setShowInstForm(true)}><Plus size={16} /> Cuota</button>
+            <button className="ghost" onClick={() => setShowCardForm(true)}><Plus size={16} /> Tarjeta</button>
           </div>
         </header>
 
@@ -409,7 +463,7 @@ export default function App() {
               <MetricCard title="Saldo total ARS" value={formatMoney(arsTotal)} icon={Wallet} tone="blue" detail={`USD disponibles: ${formatMoney(usdTotal, 'USD')}`} />
               <MetricCard title="Ingresos del mes" value={formatMoney(incomeMonth)} icon={ArrowUpRight} tone="green" detail="Plata que entró este mes" />
               <MetricCard title="Gastos del mes" value={formatMoney(expenseMonth)} icon={ArrowDownLeft} tone="red" detail={`Compromisos por cuotas: ${formatMoney(monthlyInstallments)}`} />
-              <MetricCard title="Deuda neta" value={formatMoney(debtOut - debtIn)} icon={BadgeDollarSign} tone="violet" detail={`Te deben ${formatMoney(debtIn)} · Debés ${formatMoney(debtOut)}`} />
+              <MetricCard title="Tarjeta próximo resumen" value={formatMoney(nextCardDue)} icon={CreditCard} tone="violet" detail={`Disponible estimado: ${formatMoney(totalCardAvailable)} / ${formatMoney(totalCardLimit)}`} />
             </section>
 
             <section className="recommendation-grid">
@@ -632,12 +686,70 @@ export default function App() {
             </div>
           </section>
         )}
+
+        {activeTab === 'cards' && (
+          <section className="table-shell split-shell cards-shell">
+            <div>
+              <div className="table-header">
+                <h3>Tarjetas de crédito</h3>
+                <div className="quick-actions">
+                  <button className="ghost" onClick={() => setShowCardForm(true)}><Plus size={16} /> Nueva tarjeta</button>
+                  <button className="ghost" onClick={() => setShowCardPurchaseForm(true)}><Plus size={16} /> Compra con tarjeta</button>
+                </div>
+              </div>
+              <div className="account-grid cards-grid">
+                {data.creditCards.map((card) => (
+                  <article key={card.id} className="account-card credit-card-block">
+                    <div className="account-head">
+                      <div className="icon-wrap"><CreditCard size={18} /></div>
+                      <div>
+                        <strong>{card.name}</strong>
+                        <small>{card.bank}</small>
+                      </div>
+                    </div>
+                    <div className="account-balance">{formatMoney(card.available)}</div>
+                    <small>Disponible estimado</small>
+                    <div className="installment-meta card-meta-row">
+                      <span>Límite {formatMoney(card.limit)}</span>
+                      <span>Cierre {card.closingDay} · Vence {card.dueDay}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <div className="table-shell card-purchases-panel">
+              <div className="table-header">
+                <h3>Próximo resumen</h3>
+              </div>
+              <div className="mini-card card-summary-highlight">
+                <span>Total estimado próximo vencimiento</span>
+                <strong>{formatMoney(nextCardDue)}</strong>
+              </div>
+              <div className="tx-list">
+                {data.cardPurchases.map((purchase) => {
+                  const card = data.creditCards.find((c) => c.id === purchase.cardId);
+                  return (
+                    <div className="tx-row" key={purchase.id}>
+                      <div>
+                        <strong>{purchase.title}</strong>
+                        <small>{card?.name} · {purchase.category} · {purchase.currentInstallment}/{purchase.installments}</small>
+                      </div>
+                      <span>{formatMoney(purchase.installmentAmount)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
       </div>
 
       {showAccountForm && <Modal title="Nueva cuenta" onClose={() => setShowAccountForm(false)}><AccountForm onSubmit={addAccount} /></Modal>}
       {showTxForm && <Modal title="Nuevo movimiento" onClose={() => setShowTxForm(false)}><TransactionForm accounts={data.accounts} onSubmit={addTransaction} /></Modal>}
       {showDebtForm && <Modal title="Nueva deuda" onClose={() => setShowDebtForm(false)}><DebtForm onSubmit={addDebt} /></Modal>}
       {showInstForm && <Modal title="Nuevo plan en cuotas" onClose={() => setShowInstForm(false)}><InstallmentForm accounts={data.accounts} onSubmit={addInstallment} /></Modal>}
+      {showCardForm && <Modal title="Nueva tarjeta de crédito" onClose={() => setShowCardForm(false)}><CreditCardForm onSubmit={addCreditCard} /></Modal>}
+      {showCardPurchaseForm && <Modal title="Nueva compra con tarjeta" onClose={() => setShowCardPurchaseForm(false)}><CardPurchaseForm cards={data.creditCards} onSubmit={addCardPurchase} /></Modal>}
     </div>
   );
 }
@@ -711,6 +823,34 @@ function InstallmentForm({ accounts, onSubmit }) {
   </form>;
 }
 
+function CreditCardForm({ onSubmit }) {
+  const [form, setForm] = useState({ name: '', bank: '', closingDay: 25, dueDay: 3, limit: '', available: '', currency: 'ARS' });
+  return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
+    <Field label="Nombre de la tarjeta" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+    <Field label="Banco / emisor" value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} required />
+    <Field label="Día de cierre" type="number" value={form.closingDay} onChange={(e) => setForm({ ...form, closingDay: e.target.value })} required />
+    <Field label="Día de vencimiento" type="number" value={form.dueDay} onChange={(e) => setForm({ ...form, dueDay: e.target.value })} required />
+    <Field label="Límite" type="number" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} required />
+    <Field label="Disponible actual" type="number" value={form.available} onChange={(e) => setForm({ ...form, available: e.target.value })} required />
+    <button className="submit-btn">Guardar tarjeta</button>
+  </form>;
+}
+
+function CardPurchaseForm({ cards, onSubmit }) {
+  const [form, setForm] = useState({ cardId: cards[0]?.id || '', title: '', total: '', installments: 1, currentInstallment: 1, purchaseDate: today(), nextDueMonth: future(10), category: 'Consumo' });
+  return <form className="form-grid" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
+    <SelectField label="Tarjeta" value={form.cardId} onChange={(e) => setForm({ ...form, cardId: e.target.value })} options={cards.map((c) => ({ value: c.id, label: c.name }))} />
+    <Field label="Compra" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+    <Field label="Monto total" type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} required />
+    <Field label="Cantidad de cuotas" type="number" value={form.installments} onChange={(e) => setForm({ ...form, installments: e.target.value })} required />
+    <Field label="Cuota actual" type="number" value={form.currentInstallment} onChange={(e) => setForm({ ...form, currentInstallment: e.target.value })} required />
+    <Field label="Fecha de compra" type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })} required />
+    <Field label="Próximo vencimiento estimado" type="date" value={form.nextDueMonth} onChange={(e) => setForm({ ...form, nextDueMonth: e.target.value })} required />
+    <Field label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
+    <button className="submit-btn">Guardar compra</button>
+  </form>;
+}
+
 function LandingScreen({ onAuth }) {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -751,7 +891,6 @@ function LandingScreen({ onAuth }) {
       <div className="landing-noise" />
       <header className="landing-topbar">
         <div>
-          <span className="eyebrow">Finanzas personales para Argentina</span>
           <div className="landing-brand">pesito.ar</div>
           <small className="brand-subline">Hecha por argentinos, para argentinos</small>
         </div>
