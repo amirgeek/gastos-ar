@@ -1,66 +1,54 @@
 # pesito.ar
 
-App argentina para controlar gastos, cuentas, deudas, cuotas, tarjetas y rendimientos.
+App argentina para ordenar cuentas, movimientos, deudas, cuotas, tarjetas y comparar rendimientos de referencia en ARS.
 
-## Qué cambió en esta versión
+## Estado actual del producto
 
-- Módulo de rendimientos rehecho tomando como referencia la estructura de `rendimientos-ar`:
-  - catálogo curado/normalizado de billeteras, cuentas remuneradas, FCIs money market y plazo fijo
-  - seed más realista para cuentas e instrumentos en ARS
-  - sugerencia de mover plata conectada al flujo mensual libre estimado
-  - formularios de cuenta con opción de elegir una entidad conocida o usar `Otra / personalizada`
-- Persistencia base en Supabase para:
-  - cuentas
-  - movimientos
-  - deudas
-  - cuotas
-  - tarjetas
-  - compras con tarjeta
-  - presupuestos
-  - rendimientos / yields
-- CRUD básico en UI para cuentas, movimientos, deudas, cuotas, tarjetas, compras con tarjeta, presupuestos y rendimientos
-- Carga/guardado por usuario autenticado
-- Seed automático la primera vez que entra un usuario autenticado
-- Módulo de tarjetas con:
-  - próximo cierre
-  - próximo vencimiento
-  - resumen a vencer
-  - ciclo siguiente
-  - total comprometido por tarjeta
+Listo para uso público en su núcleo manual:
+
+- cuentas y billeteras
+- movimientos
+- deudas
+- compras en cuotas
+- tarjetas de crédito y consumos
+- presupuestos
+- comparador orientativo de rendimientos en ARS
+- autenticación y persistencia por usuario con Supabase opcional
+
+## Limpieza de producción aplicada
+
+- se removió el seed financiero demo para usuarios nuevos
+- se reemplazó copy placeholder o demasiado interna por lenguaje público
+- se ocultó la suscripción pública porque la activación automática todavía no estaba cerrada de punta a punta
+- se deshabilitó el webhook de pagos hasta validar payload, seguridad y reconciliación real
+- se simplificó el módulo de rendimientos para dejarlo explícitamente como referencia manual, no como dato en vivo
 
 ## Variables de entorno
 
-Frontend / Vercel:
+Frontend:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `GALIO_CLIENT_ID`
-- `GALIO_API_KEY`
-- `APP_BASE_URL`
-- `GALIO_SANDBOX`
-- `GALIO_NOTIFICATION_URL` (opcional, idealmente `https://tu-dominio/api/galio-webhook`)
 
-## Qué falta configurar manualmente
+Backend opcional:
+
+- `SUPABASE_SERVICE_ROLE_KEY` solo si más adelante se vuelve a habilitar automatización server-side
+- `APP_BASE_URL`
+
+## Configuración mínima
 
 1. Crear proyecto en Supabase
 2. Activar Email/Password en Auth
 3. Ejecutar `supabase.sql` en el SQL editor
-4. Cargar las env vars en Vercel o en tu `.env`
+4. Cargar las env vars del frontend en Vercel o en `.env`
 5. Configurar `APP_BASE_URL` con tu dominio real
-6. Si querés reconciliar pagos automáticamente, configurar `GALIO_NOTIFICATION_URL`
-7. Si querés que el backend actualice suscripciones/perfiles, asegurar `SUPABASE_SERVICE_ROLE_KEY`
 
-## Notas pragmáticas
+## Notas reales
 
-- **Real/referencial:** la lista curada de billeteras/cuentas remuneradas/FCIs se armó reutilizando la taxonomía y nombres de `rendimientos-ar-tmp` (`public/config.json` + CAFCI proxy). En la UI se marca qué tasas vienen de referencia y cuáles siguen siendo mock curado.
-- **Mock curado:** algunos providers no estaban completos en la referencia original o no tenían una salida simple para pesito.ar. En esos casos quedó una tasa plausible y etiquetada como mock curado para no venderlo como dato vivo.
-- **Plazo fijo:** quedó modelado como instrumento/inversión con estructura útil para el producto, pero sus tasas siguen mock curado inspirado en la estructura de BCRA/rendimientos-ar; no está conectado todavía a fetch en vivo.
-- Si no configurás `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`, la app sigue funcionando en modo local.
-- Con Supabase activo, cada usuario ve su propia data.
-- La primera carga de un usuario nuevo inserta el seed inicial en sus tablas para dejar la app usable.
-- La app ya permite altas, edición y borrado básico con persistencia Supabase en los módulos principales.
-- Si agregás las tablas nuevas `budgets` y `yield_rates`, también queda persistida la capa de planificación.
+- Si no configurás `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`, la app funciona en modo local en el navegador.
+- Si configurás Supabase, cada usuario ve y guarda su propia data.
+- El comparador de rendimientos usa valores de referencia curados. No promete tasas en vivo ni ejecución automática.
+- La parte de cobros/suscripciones quedó intencionalmente fuera de producción pública hasta cerrar validación real del flujo.
 
 ## Scripts
 
