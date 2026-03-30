@@ -63,7 +63,7 @@ export function buildEmptyState(activeTab) {
     },
     transactions: {
       title: 'Sin movimientos no hay lectura del mes',
-      body: 'Cargá sueldo, alquiler y 1 o 2 gastos. Con eso ya armás una foto bastante más útil que una planilla vacía.',
+      body: 'Cargá tus ingresos, tus gastos principales y al menos una cuenta. Con eso ya vas a ver una foto clara de tu mes.',
       cta: 'Cargar movimiento',
       type: 'transaction',
     },
@@ -86,8 +86,8 @@ export function buildEmptyState(activeTab) {
       type: 'card',
     },
     planning: {
-      title: 'Tu planificación todavía está vacía',
-      body: 'Arrancá con un presupuesto simple o editá tasas para que la app pase de “linda” a “accionable”.',
+      title: 'Todavía no cargaste tu planificación',
+      body: 'Sumá un presupuesto o cargá una tasa de rendimiento para empezar a comparar opciones y tomar mejores decisiones.',
       cta: 'Crear presupuesto',
       type: 'budget',
     },
