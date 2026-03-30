@@ -48,7 +48,6 @@ export default function App() {
   const [subStatus, setSubStatus] = useState('idle');
   const [dataStatus, setDataStatus] = useState('idle');
   const [syncError, setSyncError] = useState('');
-  const seededUsersRef = useRef(new Set());
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }, [data]);
   useEffect(() => { if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth)); else localStorage.removeItem(AUTH_KEY); }, [auth]);
@@ -75,16 +74,7 @@ export default function App() {
       try {
         const remote = await loadRemoteData(auth.id);
         if (cancelled) return;
-        const hasAny = Object.values(remote).some((rows) => Array.isArray(rows) && rows.length > 0);
-        if (!hasAny && !seededUsersRef.current.has(auth.id)) {
-          await seedRemoteData(auth.id);
-          seededUsersRef.current.add(auth.id);
-          const reloaded = await loadRemoteData(auth.id);
-          if (!cancelled) setData(mergeRemoteData(fromDbBundle(reloaded)));
-        } else {
-          seededUsersRef.current.add(auth.id);
-          setData(mergeRemoteData(fromDbBundle(remote)));
-        }
+        setData(mergeRemoteData(fromDbBundle(remote)));
         if (!cancelled) setDataStatus('ready');
       } catch (error) {
         if (cancelled) return;
@@ -181,22 +171,6 @@ export default function App() {
     const firstError = [accounts, transactions, debts, installments, creditCards, cardPurchases, budgets, yields].find((result) => result.error)?.error;
     if (firstError) throw firstError;
     return { accounts: accounts.data || [], transactions: transactions.data || [], debts: debts.data || [], installments: installments.data || [], creditCards: creditCards.data || [], cardPurchases: cardPurchases.data || [], budgets: budgets.data || [], yields: yields.data || [] };
-  }
-
-  async function seedRemoteData(userId) {
-    const inserts = [
-      supabase.from(TABLES.accounts).insert(seed.accounts.map((item) => mapAccountToDb(item, userId))),
-      supabase.from(TABLES.transactions).insert(seed.transactions.map((item) => mapTransactionToDb(item, userId))),
-      supabase.from(TABLES.debts).insert(seed.debts.map((item) => mapDebtToDb(item, userId))),
-      supabase.from(TABLES.installments).insert(seed.installments.map((item) => mapInstallmentToDb(item, userId))),
-      supabase.from(TABLES.creditCards).insert(seed.creditCards.map((item) => mapCreditCardToDb(item, userId))),
-      supabase.from(TABLES.cardPurchases).insert(seed.cardPurchases.map((item) => mapCardPurchaseToDb(item, userId))),
-      supabase.from(TABLES.budgets).insert(seed.budgets.map((item) => mapBudgetToDb(item, userId))),
-      supabase.from(TABLES.yields).insert(seed.yields.rates.map((item) => mapYieldToDb(item, userId))),
-    ];
-    const results = await Promise.all(inserts);
-    const error = results.find((result) => result.error)?.error;
-    if (error) throw error;
   }
 
   async function insertRemote(table, payload) { if (!supabase || !auth?.id) return; const { error } = await supabase.from(table).insert(payload); if (error) throw error; }

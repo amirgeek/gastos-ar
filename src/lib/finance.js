@@ -62,49 +62,13 @@ export function getInstallmentsRemaining(purchase) {
 }
 
 export const seed = {
-  accounts: [
-    { id: 'acc-1', name: 'Mercado Pago', type: 'wallet', currency: 'ARS', balance: 280000, provider: 'mercado-pago' },
-    { id: 'acc-2', name: 'Naranja X', type: 'wallet', currency: 'ARS', balance: 160000, provider: 'naranjax' },
-    { id: 'acc-3', name: 'Ualá', type: 'wallet', currency: 'ARS', balance: 120000, provider: 'uala' },
-    { id: 'acc-4', name: 'Santander cuenta sueldo', type: 'bank', currency: 'ARS', balance: 420000, provider: 'santander' },
-    { id: 'acc-5', name: 'ICBC Alpha Pesos', type: 'investment', currency: 'ARS', balance: 310000, provider: 'icbc-alpha' },
-    { id: 'acc-6', name: 'Plazo fijo Banco Galicia', type: 'investment', currency: 'ARS', balance: 500000, provider: 'plazo-fijo-banco-galicia' },
-    { id: 'acc-7', name: 'Efectivo', type: 'cash', currency: 'ARS', balance: 60000, provider: 'cash' },
-    { id: 'acc-8', name: 'Dólares ahorro', type: 'savings', currency: 'USD', balance: 540, provider: 'usd' },
-  ],
-  transactions: [
-    { id: 'tx-1', kind: 'income', amount: 1850000, currency: 'ARS', accountId: 'acc-4', category: 'Trabajo', note: 'Sueldo', date: today(-20) },
-    { id: 'tx-2', kind: 'income', amount: 280000, currency: 'ARS', accountId: 'acc-1', category: 'Freelance', note: 'Proyecto extra', date: today(-11) },
-    { id: 'tx-3', kind: 'expense', amount: 420000, currency: 'ARS', accountId: 'acc-4', category: 'Alquiler', note: 'Depto', date: today(-18) },
-    { id: 'tx-4', kind: 'expense', amount: 134000, currency: 'ARS', accountId: 'acc-1', category: 'Supermercado', note: 'Compra del mes', date: today(-14) },
-    { id: 'tx-5', kind: 'expense', amount: 58200, currency: 'ARS', accountId: 'acc-3', category: 'Servicios', note: 'Luz, agua, internet', date: today(-9) },
-    { id: 'tx-6', kind: 'expense', amount: 39000, currency: 'ARS', accountId: 'acc-2', category: 'Transporte', note: 'SUBE, nafta, peajes', date: today(-8) },
-    { id: 'tx-7', kind: 'expense', amount: 86400, currency: 'ARS', accountId: 'acc-1', category: 'Comida', note: 'Pedidos + almuerzos', date: today(-5) },
-    { id: 'tx-8', kind: 'expense', amount: 41200, currency: 'ARS', accountId: 'acc-7', category: 'Salidas', note: 'Fin de semana', date: today(-2) },
-  ],
-  debts: [
-    { id: 'debt-1', kind: 'owed', person: 'Mauro', total: 180000, remaining: 120000, currency: 'ARS', dueDate: future(8), note: 'Préstamo puente' },
-    { id: 'debt-2', kind: 'receivable', person: 'Sofi', total: 90000, remaining: 90000, currency: 'ARS', dueDate: future(12), note: 'Viaje compartido' },
-  ],
-  installments: [
-    { id: 'inst-1', title: 'Notebook', total: 1200000, installments: 12, paidCount: 5, installmentAmount: 100000, currency: 'ARS', accountId: 'acc-4', category: 'Tecnología' },
-    { id: 'inst-2', title: 'Heladera', total: 840000, installments: 9, paidCount: 2, installmentAmount: 93333.33, currency: 'ARS', accountId: 'acc-4', category: 'Hogar' },
-  ],
-  creditCards: [
-    { id: 'card-1', name: 'Visa Santander', bank: 'Santander', closingDay: 24, dueDay: 2, limit: 2200000, available: 1460000, currency: 'ARS' },
-    { id: 'card-2', name: 'Amex Galicia', bank: 'Galicia', closingDay: 18, dueDay: 29, limit: 1800000, available: 1190000, currency: 'ARS' },
-  ],
-  cardPurchases: [
-    { id: 'cp-1', cardId: 'card-1', title: 'Seguro del auto', total: 210000, installments: 3, currentInstallment: 1, installmentAmount: 70000, purchaseDate: today(-10), nextDueMonth: future(6), category: 'Auto' },
-    { id: 'cp-2', cardId: 'card-1', title: 'Pasajes', total: 540000, installments: 6, currentInstallment: 2, installmentAmount: 90000, purchaseDate: today(-25), nextDueMonth: future(6), category: 'Viajes' },
-    { id: 'cp-3', cardId: 'card-2', title: 'Sillón', total: 960000, installments: 12, currentInstallment: 4, installmentAmount: 80000, purchaseDate: today(-54), nextDueMonth: future(3), category: 'Hogar' },
-  ],
-  budgets: [
-    { id: 'bud-1', category: 'Supermercado', amount: 180000 },
-    { id: 'bud-2', category: 'Comida', amount: 110000 },
-    { id: 'bud-3', category: 'Salidas', amount: 70000 },
-    { id: 'bud-4', category: 'Servicios', amount: 70000 },
-  ],
+  accounts: [],
+  transactions: [],
+  debts: [],
+  installments: [],
+  creditCards: [],
+  cardPurchases: [],
+  budgets: [],
   yields: {
     updatedAt: new Date().toISOString(),
     rates: DEFAULT_YIELD_RATES,
